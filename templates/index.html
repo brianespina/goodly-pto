@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>{{.title}}</title>
+	<script src="/js/htmx.min.js"></script>
+</head>
+
+<body>
+	<input type="text" name="q" hx-get="/trigger_delay" hx-trigger="keyup changed delay:500ms"
+		hx-target="#search-results" placeholder="Search...">
+	<div id="search-results"></div>
+	<div hx-get="/ctr-click" hx-trigger="click[ctrlKey]">Click me!</div>
+
+</body>
+
+</html>
