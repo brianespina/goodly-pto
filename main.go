@@ -12,7 +12,27 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type User struct {
+	Name  string `json: name`
+	Email string `json: email`
+	Role  string `json: role`
+}
+
 func main() {
+
+	users := []User{
+		{
+			Name:  "Brian Espina",
+			Email: "brian@goodlygrowth.com",
+			Role:  "Senior Web Developer",
+		},
+		{
+			Name:  "Kenneth Romero",
+			Email: "kenneth@goodlygrowth.com",
+			Role:  "SEO L3",
+		},
+	}
+
 	godotenv.Load()
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DBSTRING"))
 	if err != nil {
@@ -27,9 +47,16 @@ func main() {
 	r.Static("/js", "./js")
 
 	r.GET("/", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "index.html", gin.H{
+		ctx.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title": os.Getenv("TITLE"),
 		})
 	})
+
+	r.POST("/test", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "list.tmpl", gin.H{
+			"users": users,
+		})
+	})
+
 	r.Run()
 }
