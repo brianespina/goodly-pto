@@ -17,21 +17,11 @@ type User struct {
 	Email string `json: email`
 	Role  string `json: role`
 }
+type Role struct {
+	Title string
+}
 
 func main() {
-
-	users := []User{
-		{
-			Name:  "Brian Espina",
-			Email: "brian@goodlygrowth.com",
-			Role:  "Senior Web Developer",
-		},
-		{
-			Name:  "Kenneth Romero",
-			Email: "kenneth@goodlygrowth.com",
-			Role:  "SEO L3",
-		},
-	}
 
 	godotenv.Load()
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DBSTRING"))
@@ -47,14 +37,35 @@ func main() {
 	r.Static("/js", "./js")
 
 	r.GET("/", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "index.tmpl", gin.H{
+		ctx.HTML(http.StatusOK, "index.html", gin.H{
 			"title": os.Getenv("TITLE"),
 		})
 	})
 
 	r.POST("/test", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "list.tmpl", gin.H{
-			"users": users,
+		var roles []Role
+		rows, err := conn.Query(ctx, "select title from roles")
+		if err != nil {
+			//handle errors
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var role Role
+			if err := rows.Scan(&role.Title); err != nil {
+				ctx.String(http.StatusInternalServerError, "Row Scan Error %v", err)
+				return
+			}
+			roles = append(roles, role)
+		}
+
+		if err := rows.Err(); err != nil {
+			ctx.String(http.StatusInternalServerError, "Rows Iteration Error %v", err)
+			return
+		}
+
+		ctx.HTML(http.StatusOK, "list.html", gin.H{
+			"roles": roles,
 		})
 	})
 
