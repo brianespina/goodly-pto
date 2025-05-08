@@ -33,40 +33,19 @@ func main() {
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
-	r.LoadHTMLGlob("templates/*")
 	r.Static("/js", "./js")
+	r.LoadHTMLGlob("templates/*")
 
 	r.GET("/", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "index.html", gin.H{
-			"title": os.Getenv("TITLE"),
+		ctx.HTML(http.StatusOK, "base.html", gin.H{
+			"title": "Goodly PTO",
 		})
 	})
-
-	r.POST("/test", func(ctx *gin.Context) {
-		var roles []Role
-		rows, err := conn.Query(ctx, "select title from roles")
-		if err != nil {
-			//handle errors
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var role Role
-			if err := rows.Scan(&role.Title); err != nil {
-				ctx.String(http.StatusInternalServerError, "Row Scan Error %v", err)
-				return
-			}
-			roles = append(roles, role)
-		}
-
-		if err := rows.Err(); err != nil {
-			ctx.String(http.StatusInternalServerError, "Rows Iteration Error %v", err)
-			return
-		}
-
-		ctx.HTML(http.StatusOK, "list.html", gin.H{
-			"roles": roles,
-		})
+	r.GET("/roles", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "roles.html", gin.H{})
+	})
+	r.GET("/users", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "users.html", gin.H{})
 	})
 
 	r.Run()
