@@ -13,9 +13,9 @@ import (
 )
 
 type User struct {
-	Name  string `json: name`
-	Email string `json: email`
-	Role  string `json: role`
+	Name  string
+	Email string
+	Role  string
 }
 type Role struct {
 	Title string
@@ -42,7 +42,30 @@ func main() {
 		})
 	})
 	r.GET("/roles", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "roles.html", gin.H{})
+		rows, err := conn.Query(ctx, "select title from roles")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer rows.Close()
+
+		var roles []Role
+
+		for rows.Next() {
+			var role Role
+			if err := rows.Scan(&role.Title); err != nil {
+				fmt.Println(err)
+				return
+			}
+			roles = append(roles, role)
+		}
+		if err := rows.Err(); err != nil {
+			fmt.Println(err)
+			return
+		}
+		ctx.HTML(http.StatusOK, "roles.html", gin.H{
+			"roles": roles,
+		})
 	})
 	r.GET("/users", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "users.html", gin.H{})

@@ -1,1 +1,5 @@
-<div>Display Roles Here</div>
+<div>
+	{{ range .roles}}
+	<p>{{ .Title }}</p>
+	{{ end }}
+</div>
