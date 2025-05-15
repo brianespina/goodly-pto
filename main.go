@@ -21,6 +21,20 @@ type Role struct {
 	Title string
 }
 
+func AuthRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("rsietna")
+		if token != "secret123" { // Replace this with real validation
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			return
+		}
+		// Continue to the next handler
+		c.Next()
+	}
+}
+
 func main() {
 
 	godotenv.Load()
@@ -36,15 +50,23 @@ func main() {
 	r.Static("/js", "./js")
 	r.LoadHTMLGlob("templates/*")
 
-	r.GET("/users", func(ctx *gin.Context) {
+	auth := r.Group("/")
+
+	auth.Use(AuthRequired())
+	auth.GET("/users", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "users.html", nil)
 	})
-	r.GET("/", func(ctx *gin.Context) {
+	auth.GET("/", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "index.html", nil)
 	})
 
+	r.GET("/login", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "login.html", nil)
+	})
 	r.GET("/db", func(ctx *gin.Context) {
-		rows, err := conn.Query(ctx, "select title from roles")
+		stdCtx := ctx.Request.Context()
+
+		rows, err := conn.Query(stdCtx, "select title from roles")
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -65,9 +87,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		ctx.HTML(http.StatusOK, "roles.html", gin.H{
-			"roles": roles,
-		})
+		ctx.IndentedJSON(http.StatusOK, roles)
 	})
 
 	r.Run()
