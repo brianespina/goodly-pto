@@ -1,13 +1,9 @@
 {{define "nav"}}
 <nav>
 	<ul>
-		<li>
-			<a hx-get="/roles" hx-target="#content" hx-trigger="click" hx-swap="innerHTML"
-				hx-indicator="#loading">Roles</a>
-		</li>
-		<li>
-			<a hx-get="/users" hx-target="#content" hx-trigger="click" hx-swap="innerHTML">Users</a>
-		</li>
+		<li><a href="/">Home</a></li>
+		<li><a href="/users">Users</a></li>
+		<li><a href="/roles">Roles</a></li>
 	</ul>
 </nav>
 {{end}}

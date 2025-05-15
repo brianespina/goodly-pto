@@ -36,12 +36,14 @@ func main() {
 	r.Static("/js", "./js")
 	r.LoadHTMLGlob("templates/*")
 
-	r.GET("/", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "base.html", gin.H{
-			"title": "Goodly PTO",
-		})
+	r.GET("/users", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "users.html", nil)
 	})
-	r.GET("/roles", func(ctx *gin.Context) {
+	r.GET("/", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "index.html", nil)
+	})
+
+	r.GET("/db", func(ctx *gin.Context) {
 		rows, err := conn.Query(ctx, "select title from roles")
 		if err != nil {
 			fmt.Println(err)
@@ -66,9 +68,6 @@ func main() {
 		ctx.HTML(http.StatusOK, "roles.html", gin.H{
 			"roles": roles,
 		})
-	})
-	r.GET("/users", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "users.html", gin.H{})
 	})
 
 	r.Run()
