@@ -44,6 +44,7 @@ func AuthRequired(db *pgx.Conn) gin.HandlerFunc {
 			return
 		}
 		ctx.Set("user_id", user_id)
+		ctx.Set("session_id", uuid_session_id)
 		ctx.Next()
 	}
 }
@@ -71,6 +72,19 @@ func main() {
 	})
 	auth.GET("/", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "index.html", nil)
+	})
+	auth.GET("/logout", func(ctx *gin.Context) {
+		session_id, _ := ctx.Get("session_id")
+		conn.Exec(ctx, "DELETE FROM sessions WHERE id = $1", session_id)
+		ctx.SetCookie(
+			"session_id", // cookie name
+			"",           // empty value
+			-1,           // maxAge: -1 means "delete now"
+			"/",          // path
+			"localhost",  // domain (must match how it was set)
+			false,        // secure (true if using HTTPS)
+			true,         // httpOnly
+		)
 	})
 	r.GET("/login", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "login.html", nil)
