@@ -98,31 +98,26 @@ func main() {
 	})
 	r.POST("/login", func(ctx *gin.Context) {
 		stdCtx := ctx.Request.Context()
-		var id, role_id int
-		var name, email string
-		var password *string
+		var email string
+		var hashed_password *string
 
-		femail := ctx.PostForm("email")
-		//fpassword := ctx.PostForm("password")
+		form_email := ctx.PostForm("email")
+		form_password := ctx.PostForm("password")
 
-		rows, err := conn.Query(stdCtx, "SELECT * FROM users WHERE email = $1", femail)
+		err := conn.QueryRow(stdCtx, "SELECT email, password FROM users WHERE email = $1", form_email).Scan(&email, &hashed_password)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		defer rows.Close()
 
-		for rows.Next() {
-			err := rows.Scan(&id, &name, &email, &role_id, &password)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+		err = bcrypt.CompareHashAndPassword([]byte(*hashed_password), []byte(form_password))
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
-		ctx.IndentedJSON(http.StatusOK, map[string]interface{}{
-			"name":  name,
-			"email": email,
-		})
+
+		fmt.Println("Log me in")
+
 	})
 	r.GET("/db", func(ctx *gin.Context) {
 		stdCtx := ctx.Request.Context()
