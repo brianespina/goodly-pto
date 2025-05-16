@@ -67,3 +67,38 @@ CREATE INDEX idx_pto_balances_pto_type_id ON pto_balances(pto_type_id);
 CREATE INDEX idx_pto_requests_user_id ON pto_requests(user_id);
 CREATE INDEX idx_pto_requests_pto_type_id ON pto_requests(pto_type_id);
 CREATE INDEX idx_pto_requests_status ON pto_requests(status);
+
+
+INSERT INTO role_permissions (role_id, permission_id) 
+VALUES 
+    (1, 3), 
+    (2, 3),
+    (3, 2),
+    (4, 3),
+    (5, 3),
+    (6, 2),
+    (7, 2),
+    (8, 3),
+    (9, 3),
+    (10, 2);
+
+
+-- Insert users
+INSERT INTO users (name, email, role_id) 
+VALUES 
+    ('Avegail Serote-Dayuja', 'avegail@goodlygrowth.com', 2), -- admin
+    ('Brian Espina', 'brian@goodlygrowth.com', 4),
+    ('John Reynald Tubay', 'john@goodlygrowth.com', 5),
+    ('Kenneth Romero', 'keneth@goodlygrowth.com', 3);
+
+INSERT INTO pto_balances (user_id, pto_type_id, balance) 
+VALUES 
+    (1, 2, 13.0), -- 10 days vacation leave
+    (1, 1, 4.0), -- 15 days sick leave
+    (2, 2, 18.0), -- 10 days vacation leave
+    (2, 1, 4.0), -- 15 days sick leave
+    (3, 2, 20.0), -- 10 days vacation leave
+    (3, 1, 5.0), -- 15 days sick leave
+    (4, 2, 15.0), -- 10 days vacation leave
+    (4, 1, 4.0);
+

@@ -25,9 +25,7 @@ func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("rsietna")
 		if token != "secret123" { // Replace this with real validation
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
+			c.Redirect(http.StatusFound, "/login")
 			return
 		}
 		// Continue to the next handler
@@ -51,7 +49,6 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	auth := r.Group("/")
-
 	auth.Use(AuthRequired())
 	auth.GET("/users", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "users.html", nil)
@@ -59,10 +56,10 @@ func main() {
 	auth.GET("/", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "index.html", nil)
 	})
-
 	r.GET("/login", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "login.html", nil)
 	})
+
 	r.GET("/db", func(ctx *gin.Context) {
 		stdCtx := ctx.Request.Context()
 
