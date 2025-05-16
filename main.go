@@ -71,7 +71,26 @@ func main() {
 		ctx.HTML(http.StatusOK, "users.html", nil)
 	})
 	auth.GET("/", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "index.html", nil)
+		user_id, _ := ctx.Get("user_id")
+		var name, email string
+		var vacation_leave, sick_leave int
+		conn.QueryRow(ctx, `SELECT 
+    u.name,
+    u.email,
+    COALESCE(MAX(CASE WHEN pt.title = 'vacation_leave' THEN pb.balance END), 0.0) AS vacation_leave,
+    COALESCE(MAX(CASE WHEN pt.title = 'sick_leave' THEN pb.balance END), 0.0) AS sick_leave
+FROM users u
+LEFT JOIN pto_balances pb ON u.id = pb.user_id
+LEFT JOIN pto_types pt ON pb.pto_type_id = pt.id
+WHERE u.id = $1
+GROUP BY u.id, u.name, u.email
+ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
+		ctx.HTML(http.StatusOK, "index.html", gin.H{
+			"name":     name,
+			"email":    email,
+			"vacation": vacation_leave,
+			"sick":     sick_leave,
+		})
 	})
 	auth.GET("/logout", func(ctx *gin.Context) {
 		session_id, _ := ctx.Get("session_id")
