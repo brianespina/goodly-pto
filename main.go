@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -60,6 +61,69 @@ func main() {
 		ctx.HTML(http.StatusOK, "login.html", nil)
 	})
 
+	r.GET("/register/:id", func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		var name string
+		err := conn.QueryRow(ctx, "SELECT name FROM users WHERE Id=$1", id).Scan(&name)
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		ctx.HTML(http.StatusOK, "register.html", gin.H{
+			"name": name,
+		})
+	})
+
+	r.POST("/register/:id", func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		password := ctx.PostForm("password")
+		passwordcopy := ctx.PostForm("passwordcopy")
+		if password != passwordcopy {
+			fmt.Println("Passwords did not match")
+			return
+		}
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		commTag, err := conn.Exec(ctx, "UPDATE users SET password = $1 WHERE id = $2", hash, id)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(commTag)
+		ctx.Redirect(http.StatusFound, "/login")
+	})
+	r.POST("/login", func(ctx *gin.Context) {
+		stdCtx := ctx.Request.Context()
+		var id, role_id int
+		var name, email string
+		var password *string
+
+		femail := ctx.PostForm("email")
+		//fpassword := ctx.PostForm("password")
+
+		rows, err := conn.Query(stdCtx, "SELECT * FROM users WHERE email = $1", femail)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			err := rows.Scan(&id, &name, &email, &role_id, &password)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+		ctx.IndentedJSON(http.StatusOK, map[string]interface{}{
+			"name":  name,
+			"email": email,
+		})
+	})
 	r.GET("/db", func(ctx *gin.Context) {
 		stdCtx := ctx.Request.Context()
 
