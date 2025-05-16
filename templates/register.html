@@ -1,6 +1,9 @@
 {{template "head"}}
 {{template "header"}}
 <h1>Reset Password for {{.name}}</h1>
+{{if .flash}}
+<p>{{ .flash}}</p>
+{{end}}
 <form method="post">
 	<input type="password" required name="password">
 	<input type="password" required name="passwordcopy">
