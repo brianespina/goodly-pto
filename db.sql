@@ -102,3 +102,25 @@ VALUES
     (4, 2, 15.0), -- 10 days vacation leave
     (4, 1, 4.0);
 
+
+SELECT 
+    pr.id AS request_id,
+    u.id AS user_id,
+    u.name AS user_name,
+    u.email AS user_email,
+    r_managed.title AS user_role,
+    pt.title AS pto_type,
+    pr.start_date,
+    pr.end_date,
+    pr.days AS days,
+    pr.status,
+    pr.created_at
+        FROM users u_manager
+        JOIN roles r_manager ON u_manager.role_id = r_manager.id
+        JOIN role_management rm ON r_manager.id = rm.manager_role_id
+        JOIN roles r_managed ON rm.managed_role_id = r_managed.id
+        JOIN users u ON u.role_id = r_managed.id
+        JOIN pto_requests pr ON u.id = pr.user_id
+        JOIN pto_types pt ON pr.pto_type_id = pt.id
+        WHERE u_manager.id = 2
+        ORDER BY pr.created_at DESC;
