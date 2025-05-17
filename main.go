@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -24,7 +24,7 @@ type Role struct {
 	Title string
 }
 
-func AuthRequired(db *pgx.Conn) gin.HandlerFunc {
+func AuthRequired(db *pgxpool.Pool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		session_id, err := ctx.Cookie("session_id")
 		var user_id int
@@ -52,13 +52,12 @@ func AuthRequired(db *pgx.Conn) gin.HandlerFunc {
 func main() {
 
 	godotenv.Load()
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DBSTRING"))
-
+	pool, err := pgxpool.New(context.Background(), os.Getenv("DBSTRING"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer conn.Close(context.Background())
+	defer pool.Close()
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
@@ -66,7 +65,7 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	auth := r.Group("/")
-	auth.Use(AuthRequired(conn))
+	auth.Use(AuthRequired(pool))
 	auth.GET("/users", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "users.html", nil)
 	})
@@ -74,7 +73,7 @@ func main() {
 		user_id, _ := ctx.Get("user_id")
 		var name, email string
 		var vacation_leave, sick_leave int
-		conn.QueryRow(ctx, `SELECT 
+		pool.QueryRow(ctx, `SELECT 
     u.name,
     u.email,
     COALESCE(MAX(CASE WHEN pt.title = 'vacation_leave' THEN pb.balance END), 0.0) AS vacation_leave,
@@ -94,7 +93,7 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 	})
 	auth.GET("/logout", func(ctx *gin.Context) {
 		session_id, _ := ctx.Get("session_id")
-		conn.Exec(ctx, "DELETE FROM sessions WHERE id = $1", session_id)
+		pool.Exec(ctx, "DELETE FROM sessions WHERE id = $1", session_id)
 		ctx.SetCookie(
 			"session_id", // cookie name
 			"",           // empty value
@@ -112,7 +111,7 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 	r.GET("/register/:id", func(ctx *gin.Context) {
 		id := ctx.Param("id")
 		var name string
-		err := conn.QueryRow(ctx, "SELECT name FROM users WHERE Id=$1", id).Scan(&name)
+		err := pool.QueryRow(ctx, "SELECT name FROM users WHERE Id=$1", id).Scan(&name)
 
 		if err != nil {
 			fmt.Println(err)
@@ -138,7 +137,7 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 			fmt.Println(err)
 			return
 		}
-		commTag, err := conn.Exec(ctx, "UPDATE users SET password = $1 WHERE id = $2", hash, id)
+		commTag, err := pool.Exec(ctx, "UPDATE users SET password = $1 WHERE id = $2", hash, id)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -155,7 +154,7 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 		form_email := ctx.PostForm("email")
 		form_password := ctx.PostForm("password")
 
-		err := conn.QueryRow(stdCtx, "SELECT email, password, id FROM users WHERE email = $1", form_email).Scan(&email, &hashed_password, &id)
+		err := pool.QueryRow(stdCtx, "SELECT email, password, id FROM users WHERE email = $1", form_email).Scan(&email, &hashed_password, &id)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -172,7 +171,7 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 		session_id := uuid.New().String()
 		expires := time.Now().Add(24 * time.Hour)
 
-		_, err = conn.Exec(ctx, "INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)", session_id, id, expires)
+		_, err = pool.Exec(ctx, "INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)", session_id, id, expires)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -185,7 +184,7 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 	r.GET("/db", func(ctx *gin.Context) {
 		stdCtx := ctx.Request.Context()
 
-		rows, err := conn.Query(stdCtx, "select title from roles")
+		rows, err := pool.Query(stdCtx, "select title from roles")
 		if err != nil {
 			fmt.Println(err)
 			return
