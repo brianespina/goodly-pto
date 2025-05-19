@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"fmt"
@@ -14,62 +13,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
+	"goodly-pto/auth"
+	"goodly-pto/models"
 )
-
-type User struct {
-	Name  string
-	Email string
-	Role  string
-}
-type Role struct {
-	Title string
-}
-type PTOStatus string
-
-const (
-	StatusPending  PTOStatus = "pending"
-	StatusApproved PTOStatus = "approved"
-	StatusDenied   PTOStatus = "denied"
-)
-
-type PTORequest struct {
-	Id        int
-	User      int
-	Type      int
-	StartDate string
-	EndDate   string
-	Hours     float64
-	Days      float64
-	Status    PTOStatus
-}
-
-func AuthRequired(db *pgxpool.Pool) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		session_id, err := ctx.Cookie("session_id")
-		var user_id int
-		if err != nil {
-			fmt.Println("no session ID in cookies")
-			ctx.Redirect(http.StatusSeeOther, "/login")
-			ctx.Abort()
-			return
-		}
-		uuid_session_id, err := uuid.Parse(session_id)
-		err = db.QueryRow(ctx, "SELECT user_id FROM sessions WHERE id = $1 AND expires_at > NOW()", uuid_session_id).Scan(&user_id)
-		if err != nil {
-			fmt.Println("no session in DB")
-			fmt.Println(err)
-			ctx.Redirect(http.StatusSeeOther, "/login")
-			ctx.Abort()
-			return
-		}
-		ctx.Set("user_id", user_id)
-		ctx.Set("session_id", uuid_session_id)
-		ctx.Next()
-	}
-}
 
 func main() {
-
 	godotenv.Load()
 	pool, err := pgxpool.New(context.Background(), os.Getenv("DBSTRING"))
 	if err != nil {
@@ -83,89 +31,11 @@ func main() {
 	r.Static("/js", "./js")
 	r.LoadHTMLGlob("templates/*")
 
-	auth := r.Group("/")
-	auth.Use(AuthRequired(pool))
-	auth.GET("/users", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "users.html", nil)
-	})
-	auth.GET("/", func(ctx *gin.Context) {
-		user_id, _ := ctx.Get("user_id")
-		var name, email string
-		var vacation_leave, sick_leave int
-		pool.QueryRow(ctx, `SELECT 
-    u.name,
-    u.email,
-    COALESCE(MAX(CASE WHEN pt.title = 'vacation_leave' THEN pb.balance END), 0.0) AS vacation_leave,
-    COALESCE(MAX(CASE WHEN pt.title = 'sick_leave' THEN pb.balance END), 0.0) AS sick_leave
-FROM users u
-LEFT JOIN pto_balances pb ON u.id = pb.user_id
-LEFT JOIN pto_types pt ON pb.pto_type_id = pt.id
-WHERE u.id = $1
-GROUP BY u.id, u.name, u.email
-ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
-		ctx.HTML(http.StatusOK, "index.html", gin.H{
-			"name":     name,
-			"email":    email,
-			"vacation": vacation_leave,
-			"sick":     sick_leave,
-		})
-	})
-	auth.GET("/logout", func(ctx *gin.Context) {
-		session_id, _ := ctx.Get("session_id")
-		pool.Exec(ctx, "DELETE FROM sessions WHERE id = $1", session_id)
-		ctx.SetCookie(
-			"session_id", // cookie name
-			"",           // empty value
-			-1,           // maxAge: -1 means "delete now"
-			"/",          // path
-			"localhost",  // domain (must match how it was set)
-			false,        // secure (true if using HTTPS)
-			true,         // httpOnly
-		)
-	})
-	auth.GET("/request", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "request.html", nil)
-	})
-	auth.POST("/request", func(ctx *gin.Context) {
-		user_id, _ := ctx.Get("user_id")
-		var request PTORequest
-		var balance float64
+	authGroup := r.Group("/")
+	authGroup.Use(auth.AuthRequired(pool))
 
-		start_date := ctx.PostForm("start_date")
-		end_date := ctx.PostForm("end_date")
-		pto_type_raw := ctx.PostForm("type")
-		pto_type, _ := strconv.Atoi(pto_type_raw)
-		var pto_count float64
-		err := pool.QueryRow(ctx, "SELECT count_weekdays($1, $2)", start_date, end_date).Scan(&pto_count)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		request.StartDate = start_date
-		request.EndDate = end_date
-		request.User = user_id.(int)
-		request.Type = pto_type
-		request.Days = pto_count
+	auth.RegisterProtectedRoutes(authGroup, pool)
 
-		err = pool.QueryRow(ctx, "SELECT balance FROM pto_balances WHERE user_id = $1 AND pto_type_id = $2", request.User, request.Type).Scan(&balance)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		if request.Days > balance {
-			fmt.Println("Insuficient Balance")
-			return
-		}
-		fmt.Println("Request Valid")
-
-		tag, err := pool.Exec(ctx, "INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days) VALUES ($1, $2, $3, $4, $5)", request.User, request.Type, request.StartDate, request.EndDate, request.Days)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		fmt.Println(tag)
-		ctx.IndentedJSON(http.StatusOK, request)
-	})
 	r.GET("/login", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "login.html", nil)
 	})
@@ -229,7 +99,6 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 			return
 		}
 
-		// TODO: Login logic here
 		session_id := uuid.New().String()
 		expires := time.Now().Add(24 * time.Hour)
 
@@ -239,10 +108,9 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 			return
 		}
 		ctx.SetCookie("session_id", session_id, 86400, "/", "localhost", false, true)
-
-		fmt.Println("Log me in")
-
+		ctx.Redirect(http.StatusSeeOther, "/")
 	})
+
 	r.GET("/db", func(ctx *gin.Context) {
 		stdCtx := ctx.Request.Context()
 
@@ -253,10 +121,10 @@ ORDER BY u.id;`, user_id).Scan(&name, &email, &vacation_leave, &sick_leave)
 		}
 		defer rows.Close()
 
-		var roles []Role
+		var roles []models.Role
 
 		for rows.Next() {
-			var role Role
+			var role models.Role
 			if err := rows.Scan(&role.Title); err != nil {
 				fmt.Println(err)
 				return
