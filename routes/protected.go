@@ -104,6 +104,15 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		fmt.Println(tag)
 		ctx.IndentedJSON(http.StatusOK, request)
 	})
+	r.POST("/pto-requests/:id", func(ctx *gin.Context) {
+		id := ctx.Param("id")
+		_, err := pool.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", models.StatusApproved, id)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		ctx.String(http.StatusOK, "approved")
+	})
 	r.GET("/pto-requests", func(ctx *gin.Context) {
 		var requests []models.PTORequest
 		rows, err := pool.Query(ctx, `SELECT 
