@@ -10,8 +10,11 @@ const (
 
 type PTORequest struct {
 	Id        int
-	User      int
-	Type      int
+	Title     string
+	User      string
+	UserID    int
+	Type      string
+	TypeID    int
 	StartDate string
 	EndDate   string
 	Hours     float64

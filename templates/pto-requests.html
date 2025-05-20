@@ -1,0 +1,7 @@
+{{template "head"}}
+{{template "header"}}
+<h1>PTO Requests</h1>
+{{range .requests}}
+<p>{{.Title}} | {{.Days}}days | {{.User}} | {{.Status}}</p>
+{{end}}
+{{template "footer"}}

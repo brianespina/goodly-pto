@@ -23,14 +23,15 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		pool.QueryRow(ctx, `SELECT 
     u.name,
     u.email,
-    COALESCE(MAX(CASE WHEN pt.title = 'vacation_leave' THEN pb.balance END), 0.0) AS vacation_leave,
-    COALESCE(MAX(CASE WHEN pt.title = 'sick_leave' THEN pb.balance END), 0.0) AS sick_leave
+    COALESCE(MAX(CASE WHEN pt.id= 2 THEN pb.balance END), 0.0) AS vacation_leave,
+    COALESCE(MAX(CASE WHEN pt.id = 1 THEN pb.balance END), 0.0) AS sick_leave
 FROM users u
 LEFT JOIN pto_balances pb ON u.id = pb.user_id
 LEFT JOIN pto_types pt ON pb.pto_type_id = pt.id
 WHERE u.id = $1
 GROUP BY u.id, u.name, u.email
 ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_leave)
+		// TODO: err hanling
 		ctx.HTML(http.StatusOK, "index.html", gin.H{
 			"name":     user.Name,
 			"email":    user.Email,
@@ -80,8 +81,8 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		}
 		request.StartDate = start_date
 		request.EndDate = end_date
-		request.User = user_id.(int)
-		request.Type = pto_type
+		request.UserID = user_id.(int)
+		request.TypeID = pto_type
 		request.Days = pto_count
 
 		err = pool.QueryRow(ctx, "SELECT balance FROM pto_balances WHERE user_id = $1 AND pto_type_id = $2", request.User, request.Type).Scan(&balance)
@@ -103,4 +104,38 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		fmt.Println(tag)
 		ctx.IndentedJSON(http.StatusOK, request)
 	})
+	r.GET("/pto-requests", func(ctx *gin.Context) {
+		var requests []models.PTORequest
+		rows, err := pool.Query(ctx, `SELECT 
+pto_requests.id,
+pt.title as title,
+u.name as requester,
+pto_requests.days,
+pto_requests.status
+FROM pto_requests
+JOIN pto_types pt ON pto_requests.pto_type_id = pt.id
+JOIN users u ON u.id = pto_requests.user_id 
+JOIN role_management rm on rm.managed_role_id = u.role_id
+WHERE manager_role_id = $1
+`, 6)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var request models.PTORequest
+			err := rows.Scan(&request.Id, &request.Title, &request.User, &request.Days, &request.Status)
+			requests = append(requests, request)
+			if err != nil {
+				ctx.String(http.StatusInternalServerError, "Scan error: %v", err)
+				return
+			}
+		}
+
+		ctx.HTML(http.StatusOK, "pto-requests.html", gin.H{
+			"requests": requests,
+		})
+	})
+
 }

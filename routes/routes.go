@@ -21,7 +21,6 @@ func RegisterRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		id := ctx.Param("id")
 		var name string
 		err := pool.QueryRow(ctx, "SELECT name FROM users WHERE Id=$1", id).Scan(&name)
-
 		if err != nil {
 			fmt.Println(err)
 			return
