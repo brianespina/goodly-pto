@@ -75,18 +75,20 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		pto_type_raw := ctx.PostForm("type")
 		pto_type, _ := strconv.Atoi(pto_type_raw)
 		var pto_count float64
+
 		err := pool.QueryRow(ctx, "SELECT count_weekdays($1, $2)", start_date, end_date).Scan(&pto_count)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+
 		request.StartDate = start_date
 		request.EndDate = end_date
 		request.UserID = user_id.(int)
 		request.TypeID = pto_type
 		request.Days = pto_count
 
-		err = pool.QueryRow(ctx, "SELECT balance FROM pto_balances WHERE user_id = $1 AND pto_type_id = $2", request.User, request.Type).Scan(&balance)
+		err = pool.QueryRow(ctx, "SELECT balance FROM pto_balances WHERE user_id = $1 AND pto_type_id = $2", request.UserID, request.TypeID).Scan(&balance)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -97,7 +99,7 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		}
 		fmt.Println("Request Valid")
 
-		tag, err := pool.Exec(ctx, "INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days) VALUES ($1, $2, $3, $4, $5)", request.User, request.Type, request.StartDate, request.EndDate, request.Days)
+		tag, err := pool.Exec(ctx, "INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days) VALUES ($1, $2, $3, $4, $5)", request.UserID, request.TypeID, request.StartDate, request.EndDate, request.Days)
 		if err != nil {
 			fmt.Println(err)
 			return
