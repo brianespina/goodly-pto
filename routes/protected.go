@@ -58,6 +58,7 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		)
 		ctx.Redirect(http.StatusSeeOther, "/login")
 	})
+
 	r.GET("/submit-pto", func(ctx *gin.Context) {
 		today := time.Now().Format("2006-01-02")
 		ctx.HTML(http.StatusOK, "request-form.html", gin.H{
@@ -114,19 +115,21 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		ctx.String(http.StatusOK, "approved")
 	})
 	r.GET("/pto-requests", func(ctx *gin.Context) {
+		user_id, _ := ctx.Get("user_id")
 		var requests []models.PTORequest
-		rows, err := pool.Query(ctx, `SELECT 
-pto_requests.id,
-pt.title as title,
-u.name as requester,
-pto_requests.days,
-pto_requests.status
-FROM pto_requests
-JOIN pto_types pt ON pto_requests.pto_type_id = pt.id
-JOIN users u ON u.id = pto_requests.user_id 
-JOIN role_management rm on rm.managed_role_id = u.role_id
-WHERE manager_role_id = $1
-`, 6)
+		rows, err := pool.Query(ctx, `SELECT DISTINCT 
+pr.id,
+pt.title,
+users.name as requester,
+pr.days,
+pr.status
+FROM users 
+JOIN pto_requests pr on pr.user_id = users.id
+JOIN pto_types pt on pr.pto_type_id = pt.id
+JOIN role_management rm on users.role_id = rm.managed_role_id
+JOIN users mu on rm.manager_role_id = mu.role_id
+WHERE mu.id = $1
+`, user_id)
 		if err != nil {
 			fmt.Println(err)
 			return
