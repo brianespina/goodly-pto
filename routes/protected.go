@@ -67,14 +67,12 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 	})
 	r.POST("/submit-pto", func(ctx *gin.Context) {
 		user_id, _ := ctx.Get("user_id")
-		var request models.PTORequest
 		var balance float64
-
+		var pto_count float64
 		start_date := ctx.PostForm("start_date")
 		end_date := ctx.PostForm("end_date")
 		pto_type_raw := ctx.PostForm("type")
 		pto_type, _ := strconv.Atoi(pto_type_raw)
-		var pto_count float64
 
 		err := pool.QueryRow(ctx, "SELECT count_weekdays($1, $2)", start_date, end_date).Scan(&pto_count)
 		if err != nil {
@@ -82,32 +80,36 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 			return
 		}
 
-		request.StartDate = start_date
-		request.EndDate = end_date
-		request.UserID = user_id.(int)
-		request.TypeID = pto_type
-		request.Days = pto_count
-
-		err = pool.QueryRow(ctx, "SELECT balance FROM pto_balances WHERE user_id = $1 AND pto_type_id = $2", request.UserID, request.TypeID).Scan(&balance)
+		err = pool.QueryRow(ctx, "SELECT balance FROM pto_balances WHERE user_id = $1 AND pto_type_id = $2", user_id, pto_type).Scan(&balance)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		if request.Days > balance {
+		if pto_count > balance {
 			fmt.Println("Insuficient Balance")
 			return
 		}
+
 		fmt.Println("Request Valid")
 
-		tag, err := pool.Exec(ctx, "INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days) VALUES ($1, $2, $3, $4, $5)", request.UserID, request.TypeID, request.StartDate, request.EndDate, request.Days)
+		tag, err := pool.Exec(
+			ctx,
+			"INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days) VALUES ($1, $2, $3, $4, $5)",
+			user_id,
+			pto_type,
+			start_date,
+			end_date,
+			pto_count,
+		)
+
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		fmt.Println(tag)
-		ctx.IndentedJSON(http.StatusOK, request)
+		fmt.Println("request sent")
 	})
-	r.POST("/pto-requests/:id", func(ctx *gin.Context) {
+	r.POST("/team-requests/:id", func(ctx *gin.Context) {
 		id := ctx.Param("id")
 		_, err := pool.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", models.StatusApproved, id)
 		if err != nil {
@@ -116,7 +118,7 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		}
 		ctx.String(http.StatusOK, "approved")
 	})
-	r.GET("/pto-requests", func(ctx *gin.Context) {
+	r.GET("/team-requests", func(ctx *gin.Context) {
 		user_id, _ := ctx.Get("user_id")
 		var requests []models.PTORequest
 		rows, err := pool.Query(ctx, `SELECT DISTINCT 
@@ -124,7 +126,8 @@ pr.id,
 pt.title,
 users.name as requester,
 pr.days,
-pr.status
+pr.status,
+pr.reason
 FROM users 
 JOIN pto_requests pr on pr.user_id = users.id
 JOIN pto_types pt on pr.pto_type_id = pt.id
@@ -139,10 +142,10 @@ WHERE mu.id = $1
 		defer rows.Close()
 		for rows.Next() {
 			var request models.PTORequest
-			err := rows.Scan(&request.Id, &request.Title, &request.User, &request.Days, &request.Status)
+			err := rows.Scan(&request.Id, &request.Title, &request.User, &request.Days, &request.Status, &request.Reason)
 			requests = append(requests, request)
 			if err != nil {
-				ctx.String(http.StatusInternalServerError, "Scan error: %v", err)
+				ctx.String(http.StatusInternalServerError, "/team-requests", err)
 				return
 			}
 		}

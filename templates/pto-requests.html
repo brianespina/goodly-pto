@@ -2,7 +2,7 @@
 {{template "header"}}
 <h1>PTO Requests</h1>
 {{range .requests}}
-<p>{{.Title}} | {{.Days}}days | {{.User}} | <span id="status-{{.Id}}">{{.Status}}</span> <button
+<p>{{.Title}} | {{.Days}}days | {{.User}} | {{.Reason}} <span id="status-{{.Id}}">{{.Status}}</span> <button
 		hx-post="/pto-requests/{{.Id}}" hx-target="#status-{{.Id}}" hx-swap="innerHTML"
 		hx-trigger="click">approve</button></p>
 {{end}}

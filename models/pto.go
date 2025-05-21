@@ -12,12 +12,11 @@ type PTORequest struct {
 	Id        int
 	Title     string
 	User      string
-	UserID    int
 	Type      string
-	TypeID    int
 	StartDate string
 	EndDate   string
 	Hours     float64
 	Days      float64
+	Reason    string
 	Status    PTOStatus
 }
