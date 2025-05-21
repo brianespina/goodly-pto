@@ -9,7 +9,7 @@
 	</select>
 	<input type="date" name="start_date" min="{{.today}}" required>
 	<input type="date" name="end_date" min="{{.today}}" required>
-	<textarea name="reason"></textarea>
+	<textarea name="reason" required></textarea>
 	<button>Send</button>
 </form>
 {{template "footer"}}

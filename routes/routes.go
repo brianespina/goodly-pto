@@ -22,7 +22,7 @@ func RegisterRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		var name string
 		err := pool.QueryRow(ctx, "SELECT name FROM users WHERE Id=$1", id).Scan(&name)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error retrieving user in register\nDatabase error: %v", err)
 			return
 		}
 		ctx.HTML(http.StatusOK, "register.html", gin.H{
@@ -42,15 +42,14 @@ func RegisterRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error hashing password\nError: %v", err)
 			return
 		}
-		commTag, err := pool.Exec(ctx, "UPDATE users SET password = $1 WHERE id = $2", hash, id)
+		_, err = pool.Exec(ctx, "UPDATE users SET password = $1 WHERE id = $2", hash, id)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error resetting password\nDatabase error: %v", err)
 			return
 		}
-		fmt.Println(commTag)
 		ctx.Redirect(http.StatusFound, "/login")
 	})
 	r.POST("/login", func(ctx *gin.Context) {
@@ -64,14 +63,15 @@ func RegisterRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 
 		err := pool.QueryRow(stdCtx, "SELECT email, password, id FROM users WHERE email = $1", form_email).Scan(&email, &hashed_password, &id)
 		if err != nil {
-			fmt.Println(err)
+			// TODO: Handle wrong email
+			fmt.Printf("Wrong/No email\nDatabase error: %v", err)
 			return
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(*hashed_password), []byte(form_password))
 		if err != nil {
 			// TODO: Handle wrong password
-			fmt.Println(err)
+			fmt.Printf("Wrong Password\nError: %v", err)
 			return
 		}
 
@@ -80,7 +80,7 @@ func RegisterRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 
 		_, err = pool.Exec(ctx, "INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, $3)", session_id, id, expires)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error inserting into sessions\nDatabase error: %v", err)
 			return
 		}
 		ctx.SetCookie("session_id", session_id, 86400, "/", "localhost", false, true)

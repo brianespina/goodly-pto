@@ -12,15 +12,14 @@ import (
 )
 
 func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
-	r.GET("/users", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "users.html", nil)
-	})
 
 	r.GET("/", func(ctx *gin.Context) {
-		user_id, _ := ctx.Get("user_id")
 		user := new(models.User)
 		var vacation_leave, sick_leave float64
-		pool.QueryRow(ctx, `
+
+		user_id, _ := ctx.Get("user_id")
+
+		err := pool.QueryRow(ctx, `
 			SELECT 
 			u.name, 
 			u.email,
@@ -33,7 +32,12 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 			GROUP BY u.id, u.name, u.email
 			ORDER BY u.id;
 		`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_leave)
-		// TODO: err hanling
+
+		if err != nil {
+			fmt.Printf("Error retreiving user in Dashboard\nDatabase error: %v", err)
+			return
+		}
+
 		ctx.HTML(http.StatusOK, "index.html", gin.H{
 			"name":     user.Name,
 			"email":    user.Email,
@@ -43,12 +47,11 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	})
 	r.POST("/logout", func(ctx *gin.Context) {
 		session_id, _ := ctx.Get("session_id")
-		tag, err := pool.Exec(ctx, "DELETE FROM sessions WHERE id = $1", session_id)
+		_, err := pool.Exec(ctx, "DELETE FROM sessions WHERE id = $1", session_id)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error logging out\nDatabase error: %v", err)
 			return
 		}
-		fmt.Println(tag)
 		ctx.SetCookie(
 			"session_id", // cookie name
 			"",           // empty value
@@ -68,33 +71,37 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		})
 	})
 	r.POST("/submit-pto", func(ctx *gin.Context) {
-		user_id, _ := ctx.Get("user_id")
 		var balance float64
 		var pto_count float64
+
+		user_id, _ := ctx.Get("user_id")
 		start_date := ctx.PostForm("start_date")
 		end_date := ctx.PostForm("end_date")
 		pto_type_raw := ctx.PostForm("type")
-		pto_type, _ := strconv.Atoi(pto_type_raw)
-		reason := ctx.PostForm("reason")
-		err := pool.QueryRow(ctx, "SELECT count_weekdays($1, $2)", start_date, end_date).Scan(&pto_count)
+		pto_type, err := strconv.Atoi(pto_type_raw)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error converting string in pto submission\nError: %v", err)
+			return
+		}
+		reason := ctx.PostForm("reason")
+
+		err = pool.QueryRow(ctx, "SELECT count_weekdays($1, $2)", start_date, end_date).Scan(&pto_count)
+		if err != nil {
+			fmt.Printf("Error counting weekdays\nDatabase error: %v", err)
 			return
 		}
 
 		err = pool.QueryRow(ctx, "SELECT balance FROM pto_balances WHERE user_id = $1 AND pto_type_id = $2", user_id, pto_type).Scan(&balance)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error retrieving pto balance\nDatabase error: %v", err)
 			return
 		}
 		if pto_count > balance {
-			fmt.Println("Insuficient Balance")
+			// TODO: validation
 			return
 		}
 
-		fmt.Println("Request Valid")
-
-		tag, err := pool.Exec(
+		_, err = pool.Exec(
 			ctx,
 			"INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days, reason) VALUES ($1, $2, $3, $4, $5, $6)",
 			user_id,
@@ -106,17 +113,16 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		)
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error submitting request\nDatabase error: %v", err)
 			return
 		}
-		fmt.Println(tag)
-		fmt.Println("request sent")
+		ctx.Redirect(http.StatusSeeOther, "/submit-pto")
 	})
 	r.POST("/team-requests/:id", func(ctx *gin.Context) {
 		id := ctx.Param("id")
 		_, err := pool.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", models.StatusApproved, id)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error approving request\nDatabase error: %v", err)
 			return
 		}
 		ctx.String(http.StatusOK, "approved")
@@ -140,7 +146,7 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 			WHERE mu.id = $1
 		`, user_id)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error retrieving team requests\nDatabase error: %v", err)
 			return
 		}
 		defer rows.Close()
@@ -171,7 +177,7 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		`, user_id)
 
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Error retrieving my requests\nDatabase error: %v", err)
 			return
 		}
 
@@ -181,7 +187,7 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 			err := rows.Scan(&request.Id, &request.Type, &request.User, &request.Days, &request.Status, &request.Reason)
 			requests = append(requests, request)
 			if err != nil {
-				ctx.String(http.StatusInternalServerError, "/team-requests", err)
+				fmt.Printf("Error scanning my requests\nDatabase error: %v", err)
 				return
 			}
 		}
