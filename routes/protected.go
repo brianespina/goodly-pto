@@ -73,7 +73,7 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 		end_date := ctx.PostForm("end_date")
 		pto_type_raw := ctx.PostForm("type")
 		pto_type, _ := strconv.Atoi(pto_type_raw)
-
+		reason := ctx.PostForm("reason")
 		err := pool.QueryRow(ctx, "SELECT count_weekdays($1, $2)", start_date, end_date).Scan(&pto_count)
 		if err != nil {
 			fmt.Println(err)
@@ -94,12 +94,13 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 
 		tag, err := pool.Exec(
 			ctx,
-			"INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days) VALUES ($1, $2, $3, $4, $5)",
+			"INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days, reason) VALUES ($1, $2, $3, $4, $5, $6)",
 			user_id,
 			pto_type,
 			start_date,
 			end_date,
 			pto_count,
+			reason,
 		)
 
 		if err != nil {
@@ -142,7 +143,7 @@ WHERE mu.id = $1
 		defer rows.Close()
 		for rows.Next() {
 			var request models.PTORequest
-			err := rows.Scan(&request.Id, &request.Title, &request.User, &request.Days, &request.Status, &request.Reason)
+			err := rows.Scan(&request.Id, &request.Type, &request.User, &request.Days, &request.Status, &request.Reason)
 			requests = append(requests, request)
 			if err != nil {
 				ctx.String(http.StatusInternalServerError, "/team-requests", err)
@@ -150,7 +151,36 @@ WHERE mu.id = $1
 			}
 		}
 
-		ctx.HTML(http.StatusOK, "pto-requests.html", gin.H{
+		ctx.HTML(http.StatusOK, "team-requests.html", gin.H{
+			"requests": requests,
+		})
+	})
+	r.GET("/my-requests", func(ctx *gin.Context) {
+
+		user_id, _ := ctx.Get("user_id")
+		var requests []models.PTORequest
+		rows, err := pool.Query(ctx, `SELECT u.id, pt.title, u.name, pr.days, pr.status, pr.reason
+FROM pto_requests as pr
+JOIN pto_types pt on pt.id = pr.pto_type_id
+JOIN users u on u.id = pr.user_id
+WHERE u.id = $1
+`, user_id)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var request models.PTORequest
+			err := rows.Scan(&request.Id, &request.Type, &request.User, &request.Days, &request.Status, &request.Reason)
+			requests = append(requests, request)
+			if err != nil {
+				ctx.String(http.StatusInternalServerError, "/team-requests", err)
+				return
+			}
+		}
+		ctx.HTML(http.StatusOK, "my-requests.html", gin.H{
 			"requests": requests,
 		})
 	})

@@ -10,7 +10,6 @@ const (
 
 type PTORequest struct {
 	Id        int
-	Title     string
 	User      string
 	Type      string
 	StartDate string
