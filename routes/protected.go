@@ -20,17 +20,19 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		user_id, _ := ctx.Get("user_id")
 		user := new(models.User)
 		var vacation_leave, sick_leave float64
-		pool.QueryRow(ctx, `SELECT 
-    u.name,
-    u.email,
-    COALESCE(MAX(CASE WHEN pt.id= 2 THEN pb.balance END), 0.0) AS vacation_leave,
-    COALESCE(MAX(CASE WHEN pt.id = 1 THEN pb.balance END), 0.0) AS sick_leave
-FROM users u
-LEFT JOIN pto_balances pb ON u.id = pb.user_id
-LEFT JOIN pto_types pt ON pb.pto_type_id = pt.id
-WHERE u.id = $1
-GROUP BY u.id, u.name, u.email
-ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_leave)
+		pool.QueryRow(ctx, `
+			SELECT 
+			u.name, 
+			u.email,
+			COALESCE(MAX(CASE WHEN pt.id= 2 THEN pb.balance END), 0.0) AS vacation_leave,
+			COALESCE(MAX(CASE WHEN pt.id = 1 THEN pb.balance END), 0.0) AS sick_leave
+			FROM users u
+			LEFT JOIN pto_balances pb ON u.id = pb.user_id
+			LEFT JOIN pto_types pt ON pb.pto_type_id = pt.id
+			WHERE u.id = $1
+			GROUP BY u.id, u.name, u.email
+			ORDER BY u.id;
+		`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_leave)
 		// TODO: err hanling
 		ctx.HTML(http.StatusOK, "index.html", gin.H{
 			"name":     user.Name,
@@ -122,20 +124,21 @@ ORDER BY u.id;`, user_id).Scan(&user.Name, &user.Email, &vacation_leave, &sick_l
 	r.GET("/team-requests", func(ctx *gin.Context) {
 		user_id, _ := ctx.Get("user_id")
 		var requests []models.PTORequest
-		rows, err := pool.Query(ctx, `SELECT DISTINCT 
-pr.id,
-pt.title,
-users.name as requester,
-pr.days,
-pr.status,
-pr.reason
-FROM users 
-JOIN pto_requests pr on pr.user_id = users.id
-JOIN pto_types pt on pr.pto_type_id = pt.id
-JOIN role_management rm on users.role_id = rm.managed_role_id
-JOIN users mu on rm.manager_role_id = mu.role_id
-WHERE mu.id = $1
-`, user_id)
+		rows, err := pool.Query(ctx, `
+			SELECT DISTINCT 
+			pr.id,
+			pt.title,
+			users.name as requester,
+			pr.days,
+			pr.status,
+			pr.reason
+			FROM users 
+			JOIN pto_requests pr on pr.user_id = users.id
+			JOIN pto_types pt on pr.pto_type_id = pt.id
+			JOIN role_management rm on users.role_id = rm.managed_role_id
+			JOIN users mu on rm.manager_role_id = mu.role_id
+			WHERE mu.id = $1
+		`, user_id)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -159,12 +162,14 @@ WHERE mu.id = $1
 
 		user_id, _ := ctx.Get("user_id")
 		var requests []models.PTORequest
-		rows, err := pool.Query(ctx, `SELECT u.id, pt.title, u.name, pr.days, pr.status, pr.reason
-FROM pto_requests as pr
-JOIN pto_types pt on pt.id = pr.pto_type_id
-JOIN users u on u.id = pr.user_id
-WHERE u.id = $1
-`, user_id)
+		rows, err := pool.Query(ctx, `
+			SELECT u.id, pt.title, u.name, pr.days, pr.status, pr.reason
+			FROM pto_requests as pr
+			JOIN pto_types pt on pt.id = pr.pto_type_id
+			JOIN users u on u.id = pr.user_id
+			WHERE u.id = $1
+		`, user_id)
+
 		if err != nil {
 			fmt.Println(err)
 			return
