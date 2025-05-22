@@ -11,6 +11,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const (
+	FieldStartDateRequired string = "Start date Required"
+	FieldEndDateRequired   string = "End date Required"
+)
+
 func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 
 	r.GET("/", func(ctx *gin.Context) {
@@ -74,16 +79,50 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		var balance float64
 		var pto_count float64
 
+		var validationMsgs []string
+
 		user_id, _ := ctx.Get("user_id")
 		start_date := ctx.PostForm("start_date")
 		end_date := ctx.PostForm("end_date")
 		pto_type_raw := ctx.PostForm("type")
 		pto_type, err := strconv.Atoi(pto_type_raw)
+		reason := ctx.PostForm("reason")
+
+		//Start Date Validation
+		if start_date == "" {
+			validationMsgs = append(validationMsgs, FieldStartDateRequired)
+		}
+		start_date_parsed, err := time.Parse("2006-01-02", start_date)
+		if start_date_parsed.Before(time.Now()) {
+			validationMsgs = append(validationMsgs, "Start date can't be before today")
+		}
+		if err != nil {
+			validationMsgs = append(validationMsgs, "Start date invalid")
+		}
+
+		//End Date Validation
+		if end_date == "" {
+			validationMsgs = append(validationMsgs, FieldEndDateRequired)
+		}
+		_, err = time.Parse("2006-01-02", start_date)
+		if err != nil {
+			validationMsgs = append(validationMsgs, "End date invalid")
+		}
+		if reason == "" {
+			validationMsgs = append(validationMsgs, "Reason is required")
+		}
+
+		if len(validationMsgs) > 0 {
+			// TODO: send error msgs
+			ctx.Redirect(http.StatusSeeOther, "/submit-pto")
+			fmt.Println(validationMsgs)
+			return
+		}
+
 		if err != nil {
 			fmt.Printf("Error converting string in pto submission\nError: %v", err)
 			return
 		}
-		reason := ctx.PostForm("reason")
 
 		err = pool.QueryRow(ctx, "SELECT count_weekdays($1, $2)", start_date, end_date).Scan(&pto_count)
 		if err != nil {
@@ -100,7 +139,6 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 			// TODO: validation
 			return
 		}
-
 		_, err = pool.Exec(
 			ctx,
 			"INSERT INTO pto_requests (user_id, pto_type_id, start_date, end_date, days, reason) VALUES ($1, $2, $3, $4, $5, $6)",
@@ -119,8 +157,9 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		ctx.Redirect(http.StatusSeeOther, "/submit-pto")
 	})
 	r.POST("/team-requests/:id", func(ctx *gin.Context) {
-		id := ctx.Param("id")
-		_, err := pool.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", models.StatusApproved, id)
+		request_id := ctx.Param("id")
+
+		_, err := pool.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", models.StatusApproved, request_id)
 		if err != nil {
 			fmt.Printf("Error approving request\nDatabase error: %v", err)
 			return
