@@ -16,6 +16,14 @@ const (
 	FieldEndDateRequired   string = "End date Required"
 )
 
+func RenderTemplateWithPermission(ctx *gin.Context, code int, template string, data gin.H) {
+	permission, ok := ctx.Get("permission")
+	if ok {
+		data["permission"] = permission
+	}
+	ctx.HTML(code, template, data)
+}
+
 func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 
 	r.GET("/", func(ctx *gin.Context) {
@@ -43,7 +51,7 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 			return
 		}
 
-		ctx.HTML(http.StatusOK, "index.html", gin.H{
+		RenderTemplateWithPermission(ctx, http.StatusOK, "index.html", gin.H{
 			"name":     user.Name,
 			"email":    user.Email,
 			"vacation": vacation_leave,
@@ -71,7 +79,7 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 
 	r.GET("/submit-pto", func(ctx *gin.Context) {
 		today := time.Now().Format("2006-01-02")
-		ctx.HTML(http.StatusOK, "request-form.html", gin.H{
+		RenderTemplateWithPermission(ctx, http.StatusOK, "request-form.html", gin.H{
 			"today": today,
 		})
 	})
@@ -207,8 +215,7 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 				return
 			}
 		}
-
-		ctx.HTML(http.StatusOK, "team-requests.html", gin.H{
+		RenderTemplateWithPermission(ctx, http.StatusOK, "team-requests.html", gin.H{
 			"requests": requests,
 		})
 	})
@@ -239,7 +246,7 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 				return
 			}
 		}
-		ctx.HTML(http.StatusOK, "my-requests.html", gin.H{
+		RenderTemplateWithPermission(ctx, http.StatusOK, "my-requests.html", gin.H{
 			"requests": requests,
 		})
 	})

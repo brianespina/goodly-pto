@@ -3,7 +3,9 @@
 	<ul>
 		<li><a href="/">Dashboard</a></li>
 		<li><a href="/submit-pto">Request PTO</a></li>
+		{{if eq .permission "manager"}}
 		<li><a href="/team-requests">Team Requests</a></li>
+		{{end}}
 		<li><a href="/my-requests">My Requests</a></li>
 	</ul>
 </nav>
