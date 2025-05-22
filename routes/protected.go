@@ -92,8 +92,9 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 		if start_date == "" {
 			validationMsgs = append(validationMsgs, FieldStartDateRequired)
 		}
+		today := time.Now().Truncate(24 * time.Hour)
 		start_date_parsed, err := time.Parse("2006-01-02", start_date)
-		if start_date_parsed.Before(time.Now()) {
+		if start_date_parsed.Before(today) {
 			validationMsgs = append(validationMsgs, "Start date can't be before today")
 		}
 		if err != nil {
@@ -158,7 +159,15 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	})
 	r.POST("/team-requests/:id", func(ctx *gin.Context) {
 		request_id := ctx.Param("id")
-
+		var days, requester_id, pto_type int
+		if err := pool.QueryRow(ctx, "SELECT days, user_id, pto_type_id FROM pto_requests WHERE id = $1", request_id).Scan(&days, &requester_id, &pto_type); err != nil {
+			fmt.Printf("Error request does not exist\nDatabase error: %v", err)
+			return
+		}
+		if _, err := pool.Exec(ctx, "UPDATE pto_balances SET balance = balance - $1 WHERE user_id = $2 AND pto_type_id = $3", days, requester_id, pto_type); err != nil {
+			fmt.Printf("Error cant update PTO balance\nDatabase error: %v", err)
+			return
+		}
 		_, err := pool.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", models.StatusApproved, request_id)
 		if err != nil {
 			fmt.Printf("Error approving request\nDatabase error: %v", err)
