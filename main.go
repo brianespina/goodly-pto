@@ -24,6 +24,8 @@ func main() {
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
 	r.Static("/js", "./js")
+	r.Static("/css", "./css")
+	r.Static("/img", "./img")
 	r.LoadHTMLGlob("templates/*")
 
 	authGroup := r.Group("/")

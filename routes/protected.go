@@ -66,13 +66,13 @@ func RegisterProtectedRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 			return
 		}
 		ctx.SetCookie(
-			"session_id", // cookie name
-			"",           // empty value
-			-1,           // maxAge: -1 means "delete now"
-			"/",          // path
-			"localhost",  // domain (must match how it was set)
-			false,        // secure (true if using HTTPS)
-			true,         // httpOnly
+			"session_id",
+			"",
+			-1,
+			"/",
+			"localhost",
+			false,
+			true,
 		)
 		ctx.Redirect(http.StatusSeeOther, "/login")
 	})

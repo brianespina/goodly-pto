@@ -1,6 +1,13 @@
 {{define "header"}}
-{{template "nav" .}}
-<form method="post" action="/logout">
-	<button>Logout</button>
-</form>
+<header>
+	<div class="header-left">
+		<img src="/img/logo.webp" width="30px" height="auto" style="display: block;object-fit: contain;">
+		{{template "nav" .}}
+	</div>
+	<div class="header-right">
+		<form method="post" action="/logout">
+			<button>Logout</button>
+		</form>
+	</div>
+</header>
 {{end}}

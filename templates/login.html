@@ -1,8 +1,16 @@
 {{template "head"}}
-<h1>Login</h1>
-<form method="post">
-	<input type="email" required name="email">
-	<input type="password" required name="password">
-	<button>Login</button>
-</form>
+<div class="container center">
+	<div>
+		<div class="form-head">
+			<img src="/img/logo.webp" width="30px" height="auto"
+				style="display: block;object-fit: contain;">
+			<h1>Login</h1>
+		</div>
+		<form method="post">
+			<input type="email" required name="email" placeholder="name@domain.com">
+			<input type="password" required name="password" placeholder="password">
+			<button>Login</button>
+		</form>
+	</div>
+</div>
 {{template "footer"}}
