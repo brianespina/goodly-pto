@@ -1,3 +1,11 @@
+:root {
+	--column-gap: 20px;
+	--border-color: #292929;
+	--primary-color: #47d18c;
+	--primary-color-lt: #6dffb6;
+	--danger-color: #cc6666;
+}
+
 body {
 	max-width: 100%;
 	padding: 0;
@@ -11,13 +19,22 @@ html {
 	height: 100%;
 }
 
+button {
+	background: var(--primary-color);
+	color: #000;
+}
+
+button:hover {
+	background: var(--primary-color-lt);
+}
+
 header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	padding-inline: 30px;
 	padding-block: 10px;
-	border-bottom: solid thin #292929;
+	border-bottom: solid thin var(--border-color);
 }
 
 header nav {
@@ -34,7 +51,7 @@ header nav ul li {
 }
 
 header nav a {
-	color: #47d18c;
+	color: var(--primary-color);
 }
 
 .header-left {
@@ -44,6 +61,7 @@ header nav a {
 .container {
 	max-width: 1080px;
 	padding-inline: 30px;
+	margin: auto;
 }
 
 .container.center {
@@ -66,4 +84,163 @@ header nav a {
 .form-head h1 {
 	padding: 0;
 	margin: 0;
+}
+
+/* Requests list container */
+.requests-lits {
+	display: grid;
+	grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
+	/* 7 columns: Type, Name, Dates (combined), Duration, Status, Action */
+	padding: 0;
+	box-sizing: border-box;
+	border-radius: 5px;
+	overflow: hidden;
+	/* Ensure rounded corners apply */
+}
+
+/* Header row */
+.request-list-header {
+	display: contents;
+	/* Allows the header to follow the grid structure */
+}
+
+.request-list-header div {
+	padding: 10px;
+	font-weight: bold;
+	font-size: 14px;
+	text-align: left;
+	border-bottom: 1px solid var(--border-color);
+}
+
+/* Body container */
+.request-list-body {
+	display: contents;
+	/* Allows items to follow the grid layout */
+}
+
+/* Each request item (row) */
+.request-list-item {
+	display: grid;
+	/* Use grid to maintain the 7-column layout within the row */
+	grid-template-columns: subgrid;
+	/* Inherit the 7-column layout from parent */
+	grid-column: 1 / -1;
+	/* Span the full width of the parent grid */
+	cursor: pointer;
+}
+
+.request-list-item:hover {
+	background: linear-gradient(to right, #000, #1a1a1a, #000);
+}
+
+
+.request-list-item:last-child div {
+	border-bottom: none;
+}
+
+/* Styling for each cell in the row */
+.request-list-item div {
+	padding-inline: 10px;
+	padding-block: 20px;
+	font-size: 14px;
+	border-bottom: 1px solid var(--border-color);
+	align-content: center;
+}
+
+
+/* Combine Date From and Date To into one cell */
+.request-list-item .dates {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.card {
+	border: 1px solid var(--border-color);
+	padding: 20px;
+	border-radius: 10px;
+}
+
+.button-circle-outline {
+	margin: 0;
+	border-radius: 50%;
+	width: 25px;
+	height: 25px;
+	padding: 0;
+	background: transparent;
+	border: solid thin var(--primary-color);
+	color: var(--primary-color);
+}
+
+.button-circle-outline.danger {
+	border-color: var(--danger-color);
+	color: var(--danger-color);
+}
+
+.button-circle-outline.danger:hover {
+	background: var(--danger-color);
+}
+
+.button-circle-outline:hover {
+	color: #000;
+	background: var(--primary-color);
+}
+
+.action-cell {
+	display: flex;
+	gap: 15px;
+}
+
+/* Responsive design for mobile (less than 768px) */
+@media (max-width: 768px) {
+	.requests-lits {
+		grid-template-columns: 1fr;
+		/* Single column on mobile */
+	}
+
+	/* Hide header on mobile (optional) */
+	.request-list-header {
+		display: none;
+	}
+
+	/* Each row becomes a block */
+	.request-list-item {
+		display: flex;
+		flex-direction: column;
+		border: 1px solid var(--border-color);
+		border-radius: 5px;
+		margin-bottom: 10px;
+		padding: 10px;
+	}
+
+	/* Reset cell styles for mobile */
+	.request-list-item div {
+		border-bottom: none;
+		padding: 5px 0;
+		font-size: 14px;
+	}
+
+	/* Add labels for mobile */
+	.request-list-item div::before {
+		content: attr(data-label) ": ";
+		font-weight: bold;
+	}
+
+	/* Adjust the combined Dates field for mobile */
+	.request-list-item .dates {
+		flex-direction: column;
+	}
+
+}
+
+/* Ensure readability on very small screens (e.g., 320px) */
+@media (max-width: 320px) {
+	.request-list-item div {
+		font-size: 12px;
+	}
+
+	.request-list-item button {
+		font-size: 12px;
+		padding: 6px;
+	}
 }

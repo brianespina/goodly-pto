@@ -1,9 +1,40 @@
 {{template "head"}}
 {{template "header" .}}
-<h1>PTO Requests</h1>
-{{range .requests}}
-<p>{{.Type}} | {{.Days}}days | {{.User}} | {{.Reason}} | <span id="status-{{.Id}}">{{.Status}}</span> <button
-		hx-post="/team-requests/{{.Id}}" hx-target="#status-{{.Id}}" hx-swap="innerHTML"
-		hx-trigger="click">approve</button></p>
-{{end}}
+<div class="container">
+	<h1>PTO Requests</h1>
+	<div class="card">
+		<div class="requests-lits">
+			<div class="request-list-header">
+				<div>Type</div>
+				<div>Name</div>
+				<div>Date From</div>
+				<div>Date To</div>
+				<div>Duration</div>
+				<div>Status</div>
+				<div>Action</div>
+			</div>
+			<div class="request-list-body">
+				{{range .requests}}
+				<div class="request-list-item">
+					<div data-label="Type">{{.Type}}</div>
+					<div data-label="Name">{{.User}}</div>
+					<div data-label="Date From">2025-15-1</div>
+					<div data-label="Date To">2025-15-1</div>
+					<div data-label="Duration">{{.Days}}</div>
+					<div data-label="Status" id="status-{{.Id}}">{{.Status}}</div>
+					<div data-label="Action" class="action-cell">
+						<button class="button-circle-outline" hx-post="/team-requests/{{.Id}}"
+							hx-target="#status-{{.Id}}" hx-swap="innerHTML"
+							hx-trigger="click"><i class="fa-solid fa-check"></i></button>
+						<button class="button-circle-outline danger"
+							hx-post="/team-requests/{{.Id}}" hx-target="#status-{{.Id}}"
+							hx-swap="innerHTML" hx-trigger="click"><i
+								class="fa-solid fa-xmark"></i></button>
+					</div>
+				</div>
+				{{end}}
+			</div>
+		</div>
+	</div>
+</div>
 {{template "footer"}}

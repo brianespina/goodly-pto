@@ -2,16 +2,18 @@
 {{template "header" .}}
 <div class="container">
 	<h1>PTO Request</h1>
-	<form method="post">
-		<label for="type">Type</label>
-		<select id="type" name="type">
-			<option value="2">Vacation</option>
-			<option value="1">Sick Leave</option>
-		</select>
-		<input type="date" name="start_date" min="{{.today}}" required>
-		<input type="date" name="end_date" min="{{.today}}" required>
-		<textarea name="reason" required></textarea>
-		<button>Send</button>
-	</form>
+	<div class="card">
+		<form method="post">
+			<label for="type">Type</label>
+			<select id="type" name="type">
+				<option value="2">Vacation</option>
+				<option value="1">Sick Leave</option>
+			</select>
+			<input type="date" name="start_date" min="{{.today}}" required>
+			<input type="date" name="end_date" min="{{.today}}" required>
+			<textarea name="reason" required></textarea>
+			<button>Send</button>
+		</form>
+	</div>
 </div>
 {{template "footer"}}
