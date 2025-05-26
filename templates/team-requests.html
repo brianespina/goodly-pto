@@ -1,7 +1,7 @@
 {{template "head"}}
 {{template "header" .}}
 <div class="container">
-	<h1>PTO Requests</h1>
+	<h1>Team Requests</h1>
 	<div class="card">
 		<div class="requests-lits">
 			<div class="request-list-header">
@@ -18,8 +18,8 @@
 				<div class="request-list-item">
 					<div data-label="Type">{{.Type}}</div>
 					<div data-label="Name">{{.User}}</div>
-					<div data-label="Date From">2025-15-1</div>
-					<div data-label="Date To">2025-15-1</div>
+					<div data-label="Date From">{{.StartDate.Format "January 2, 2006"}}</div>
+					<div data-label="Date To">{{.EndDate.Format "January 2, 2006"}}</div>
 					<div data-label="Duration">{{.Days}}</div>
 					<div data-label="Status" id="status-{{.Id}}">{{.Status}}</div>
 					<div data-label="Action" class="action-cell">

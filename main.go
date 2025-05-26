@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"goodly-pto/internal/auth"
+	"goodly-pto/internal/pto"
+	"goodly-pto/internal/user"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
-	"goodly-pto/auth"
-	"goodly-pto/routes"
 )
 
 func main() {
@@ -22,17 +24,17 @@ func main() {
 	defer pool.Close()
 
 	r := gin.Default()
+	r.Static("/static", "./static")
 	r.SetTrustedProxies(nil)
-	r.Static("/js", "./js")
-	r.Static("/css", "./css")
-	r.Static("/img", "./img")
 	r.LoadHTMLGlob("templates/*")
 
 	authGroup := r.Group("/")
 	authGroup.Use(auth.AuthRequired(pool))
 
-	routes.RegisterProtectedRoutes(authGroup, pool)
-	routes.RegisterRoutes(r, pool)
+	pto.RegisterRoutes(authGroup, pool)
+	user.RegisterRoutes(authGroup, pool)
+
+	auth.RegisterRoutes(r, pool)
 
 	r.Run()
 }

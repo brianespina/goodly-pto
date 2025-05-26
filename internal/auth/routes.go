@@ -1,4 +1,4 @@
-package routes
+package auth
 
 import (
 	"net/http"
@@ -85,5 +85,24 @@ func RegisterRoutes(r *gin.Engine, pool *pgxpool.Pool) {
 		}
 		ctx.SetCookie("session_id", session_id, 86400, "/", "localhost", false, true)
 		ctx.Redirect(http.StatusSeeOther, "/")
+	})
+
+	r.POST("/logout", func(ctx *gin.Context) {
+		session_id, _ := ctx.Get("session_id")
+		_, err := pool.Exec(ctx, "DELETE FROM sessions WHERE id = $1", session_id)
+		if err != nil {
+			fmt.Printf("Error logging out\nDatabase error: %v", err)
+			return
+		}
+		ctx.SetCookie(
+			"session_id",
+			"",
+			-1,
+			"/",
+			"localhost",
+			false,
+			true,
+		)
+		ctx.Redirect(http.StatusSeeOther, "/login")
 	})
 }

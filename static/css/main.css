@@ -52,6 +52,16 @@ header nav ul li {
 
 header nav a {
 	color: var(--primary-color);
+	padding-inline: 15px;
+	padding-block: 10px;
+	border-radius: 6px;
+	transition: all .2s ease;
+}
+
+header nav a:hover,
+header nav a.active {
+	background: #242424;
+	text-decoration: none;
 }
 
 .header-left {
