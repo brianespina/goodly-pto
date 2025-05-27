@@ -171,6 +171,12 @@ header nav a.active {
 	border-radius: 10px;
 }
 
+.card h2,
+.card h3,
+.card h4 {
+	margin-top: 0;
+}
+
 .button-circle-outline {
 	margin: 0;
 	border-radius: 50%;
@@ -199,6 +205,62 @@ header nav a.active {
 .action-cell {
 	display: flex;
 	gap: 15px;
+}
+
+.dashboard-balance-columns h2 {
+	margin: 0;
+	font-size: 20px;
+}
+
+.dashboard-summary {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+}
+
+.dashboard-balance-columns {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	flex-grow: 1;
+}
+
+.dashboard-balance-columns .balance {
+	font-size: 40px;
+	font-weight: bolder;
+}
+
+.balance-title {
+	display: flex;
+	gap: 15px;
+}
+
+.dashboard-pending-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-top: 20px;
+}
+
+.dashboard-pending-head h2 {
+	margin-block: 20px;
+}
+
+.empty-list {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 50vh;
+	flex-direction: column;
+	font-weight: bold;
+	opacity: .5;
+}
+
+.image {
+	display: block;
+	object-fit: contain;
 }
 
 /* Responsive design for mobile (less than 768px) */

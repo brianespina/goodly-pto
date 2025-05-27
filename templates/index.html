@@ -1,10 +1,67 @@
 {{template "head"}}
 {{template "header" .}}
 <div class="container">
-	<h1>Homepage</h1>
-	<div>{{.name}}</div>
-	<div>{{.email}}</div>
-	<div>vacation leave: {{.vacation}}</div>
-	<div>sick leave:{{.sick}}</div>
+	<h1>Hello, {{.name}}!</h1>
+	<div class="dashboard-summary">
+		<div class="dashboard-balance-columns card">
+			<div class="balance-title">
+				<img src="/static/img/sun-bed.png" width="30px" height="auto" class="image">
+				<h2>Vacation Leave </h2>
+			</div>
+			<div class="balance">{{.vacation}}</div>
+		</div>
+		<div class="dashboard-balance-columns card">
+			<div class="balance-title">
+				<img src="/static/img/fever.png" width="30px" height="auto" class="image">
+				<h2>Sick Leave </h2>
+			</div>
+			<div class="balance">{{.sick}}</div>
+		</div>
+	</div>
+	<div class="dashboard-pending-head">
+		<h2>Pending Requests</h2>
+		<button>Submit a request</button>
+	</div>
+	<div class="card">
+		{{if .requests}}
+		<div class="requests-lits">
+			<div class="request-list-header">
+				<div>Type</div>
+				<div>Name</div>
+				<div>Date From</div>
+				<div>Date To</div>
+				<div>Duration</div>
+				<div>Status</div>
+				<div>Action</div>
+			</div>
+			<div class="request-list-body">
+				{{range .requests}}
+				<div class="request-list-item">
+					<div data-label="Type">{{.Type}}</div>
+					<div data-label="Name">{{.User}}</div>
+					<div data-label="Date From">{{.StartDate.Format "January 2, 2006"}}</div>
+					<div data-label="Date To">{{.EndDate.Format "January 2, 2006"}}</div>
+					<div data-label="Duration">{{.Days}}</div>
+					<div data-label="Status" id="status-{{.Id}}">{{.Status}}</div>
+					<div data-label="Action" class="action-cell">
+						<button class="button-circle-outline" hx-post="/team-requests/{{.Id}}"
+							hx-target="#status-{{.Id}}" hx-swap="innerHTML"
+							hx-trigger="click"><i class="fa-solid fa-check"></i></button>
+						<button class="button-circle-outline danger"
+							hx-post="/team-requests/{{.Id}}" hx-target="#status-{{.Id}}"
+							hx-swap="innerHTML" hx-trigger="click"><i
+								class="fa-solid fa-xmark"></i></button>
+					</div>
+				</div>
+				{{end}}
+			</div>
+		</div>
+		{{else}}
+		<div class="empty-list">
+			<img src="/static/img/box.png" width="40px" height="auto" class="image">
+			no requests.
+		</div>
+		{{end}}
+	</div>
 </div>
 {{template "footer"}}
