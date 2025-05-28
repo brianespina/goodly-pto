@@ -114,6 +114,14 @@ header nav a.active {
 	margin: 0;
 }
 
+.hidden {
+	opacity: 0;
+}
+
+.htmx-request.hidden {
+	opacity: 1;
+}
+
 /* Requests list container */
 .requests-lits {
 	display: grid;
