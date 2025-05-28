@@ -4,6 +4,7 @@
 	--primary-color: #47d18c;
 	--primary-color-lt: #6dffb6;
 	--danger-color: #cc6666;
+	--dark-bg: #242424;
 }
 
 body {
@@ -13,6 +14,23 @@ body {
 	height: 100%;
 	background: black;
 	font-family: "Inter", sans-serif;
+	color: #fff;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+	color: #fff;
+}
+
+input,
+select,
+input,
+textarea {
+	background: var(--dark-bg);
+	color: #fff;
 }
 
 html {
