@@ -4,11 +4,7 @@
 	<h1>My Requests</h1>
 
 	<div class="card">
-		{{range .requests}}
-		<p>{{.Type}} | {{.Days}}days | {{.User}} | {{.Reason}} | <span id="status-{{.Id}}">{{.Status}}</span>
-			<button hx-post="/pto-requests/{{.Id}}" hx-target="#status-{{.Id}}" hx-swap="innerHTML"
-				hx-trigger="click">cancel</button></p>
-		{{end}}
+		{{template "component-pto-list" .}}
 	</div>
 </div>
 {{template "footer"}}

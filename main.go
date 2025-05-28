@@ -31,7 +31,9 @@ func main() {
 	authGroup := r.Group("/")
 	authGroup.Use(auth.AuthRequired(pool))
 
-	pto.RegisterRoutes(authGroup, pool)
+	ptoService := pto.New(pool)
+	pto.RegisterRoutes(authGroup, pool, ptoService)
+
 	user.RegisterRoutes(authGroup, pool)
 
 	auth.RegisterRoutes(r, pool)

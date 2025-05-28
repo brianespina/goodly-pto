@@ -23,13 +23,14 @@ func RenderTemplateWithPermission(ctx *gin.Context, code int, template string, d
 	ctx.HTML(code, template, data)
 }
 
-func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
+func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService) {
 	r.GET("/submit-pto", func(ctx *gin.Context) {
 		today := time.Now().Format("2006-01-02")
 		RenderTemplateWithPermission(ctx, http.StatusOK, "request-form.html", gin.H{
 			"today": today,
 		})
 	})
+
 	r.POST("/submit-pto", func(ctx *gin.Context) {
 		var balance float64
 		var pto_count float64
@@ -174,31 +175,24 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool) {
 	r.GET("/my-requests", func(ctx *gin.Context) {
 
 		user_id, _ := ctx.Get("user_id")
-		var requests []PTORequest
-		rows, err := pool.Query(ctx, `
-			SELECT u.id, pt.title, u.name, pr.days, pr.status, pr.reason
-			FROM pto_requests as pr
-			JOIN pto_types pt on pt.id = pr.pto_type_id
-			JOIN users u on u.id = pr.user_id
-			WHERE u.id = $1
-		`, user_id)
-
+		requests, err := service.MyRequests(ctx, user_id)
 		if err != nil {
-			fmt.Printf("Error retrieving my requests\nDatabase error: %v", err)
+			fmt.Printf("Error fetching My requests\n")
 			return
 		}
-
-		defer rows.Close()
-		for rows.Next() {
-			var request PTORequest
-			err := rows.Scan(&request.Id, &request.Type, &request.User, &request.Days, &request.Status, &request.Reason)
-			requests = append(requests, request)
-			if err != nil {
-				fmt.Printf("Error scanning my requests\nDatabase error: %v", err)
-				return
-			}
-		}
 		RenderTemplateWithPermission(ctx, http.StatusOK, "my-requests.html", gin.H{
+			"requests": requests,
+		})
+	})
+
+	r.POST("/my-requests", func(ctx *gin.Context) {
+		user_id, _ := ctx.Get("user_id")
+		requests, err := service.MyRequests(ctx, user_id)
+		if err != nil {
+			fmt.Printf("Error fetching My requests\n")
+			return
+		}
+		ctx.HTML(http.StatusOK, "component-pto-list", gin.H{
 			"requests": requests,
 		})
 	})

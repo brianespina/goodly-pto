@@ -1,4 +1,5 @@
 {{define "component-pto-list"}}
+{{if .requests}}
 <div class="requests-lits">
 	<div class="request-list-header">
 		<div>Type</div>
@@ -30,4 +31,12 @@
 		{{end}}
 	</div>
 </div>
+{{else}}
+<div class="empty-list">
+	<img src="/static/img/box.png" width="40px" height="auto" class="image">
+	no requests.
+
+</div>
+{{end}}
+
 {{end}}
