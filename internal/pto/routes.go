@@ -133,40 +133,10 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	})
 	r.GET("/team-requests", func(ctx *gin.Context) {
 		user_id, _ := ctx.Get("user_id")
-		var requests []PTORequest
-		rows, err := pool.Query(ctx, `
-			SELECT DISTINCT 
-			pr.id,
-			pt.title,
-			pr.start_date,
-			pr.end_date,
-			users.name as requester,
-			pr.days,
-			pr.status,
-			pr.reason,
-			pr.created_at
-			FROM users 
-			JOIN pto_requests pr on pr.user_id = users.id
-			JOIN pto_types pt on pr.pto_type_id = pt.id
-			JOIN role_management rm on users.role_id = rm.managed_role_id
-			JOIN users mu on rm.manager_role_id = mu.role_id
-			WHERE mu.id = $1
-			AND pr.status = 'pending'
-			ORDER BY pr.created_at DESC
-		`, user_id)
+		requests, err := service.TeamRequests(ctx, user_id)
 		if err != nil {
-			fmt.Printf("Error retrieving team requests\nDatabase error: %v", err)
+			fmt.Printf("Error fetching team requests\n")
 			return
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var request PTORequest
-			err := rows.Scan(&request.Id, &request.Type, &request.StartDate, &request.EndDate, &request.User, &request.Days, &request.Status, &request.Reason, &request.CreatedDate)
-			requests = append(requests, request)
-			if err != nil {
-				ctx.String(http.StatusInternalServerError, "/team-requests", err)
-				return
-			}
 		}
 		RenderTemplateWithPermission(ctx, http.StatusOK, "team-requests.html", gin.H{
 			"requests": requests,
