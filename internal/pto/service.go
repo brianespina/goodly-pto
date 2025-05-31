@@ -15,7 +15,7 @@ func New(db *pgxpool.Pool) *PTOService {
 	return &PTOService{db: db}
 }
 
-func (s *PTOService) MyRequests(ctx *gin.Context, user_id any) ([]PTORequest, error) {
+func (s *PTOService) GetMyRequests(ctx *gin.Context, user_id any) ([]PTORequest, error) {
 	var requests []PTORequest
 	rows, err := s.db.Query(ctx, `
 			SELECT u.id, pt.title, u.name, pr.days, pr.status, pr.reason, pr.start_date, pr.end_date
@@ -43,7 +43,7 @@ func (s *PTOService) MyRequests(ctx *gin.Context, user_id any) ([]PTORequest, er
 	return requests, nil
 }
 
-func (s *PTOService) TeamRequests(ctx *gin.Context, user_id any) ([]PTORequest, error) {
+func (s *PTOService) GetTeamRequests(ctx *gin.Context, user_id any) ([]PTORequest, error) {
 	var requests []PTORequest
 	rows, err := s.db.Query(ctx, `
 			SELECT DISTINCT 
@@ -80,4 +80,34 @@ func (s *PTOService) TeamRequests(ctx *gin.Context, user_id any) ([]PTORequest, 
 	}
 
 	return requests, nil
+}
+
+type request struct {
+	days     int
+	user     int
+	pto_type int
+}
+
+func (s *PTOService) ApproveRequest(ctx *gin.Context, id int) error {
+	var request request
+	// get reqeust
+	if err := s.db.QueryRow(ctx, "SELECT days, user_id, pto_type_id FROM pto_requests WHERE id = $1", id).Scan(&request.days, &request.user, &request.pto_type); err != nil {
+		fmt.Printf("Error request does not exist\nDatabase error: %v", err)
+		return err
+	}
+
+	// reduce user balance
+	if _, err := s.db.Exec(ctx, "UPDATE pto_balances SET balance = balance - $1 WHERE user_id = $2 AND pto_type_id = $3", request.days, request.user, request.pto_type); err != nil {
+		fmt.Printf("Error cant update PTO balance\nDatabase error: %v", err)
+		return err
+	}
+
+	// set status to approved
+	_, err := s.db.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", StatusApproved, id)
+	if err != nil {
+		fmt.Printf("Error approving request\nDatabase error: %v", err)
+		return err
+	}
+
+	return nil
 }

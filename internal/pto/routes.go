@@ -115,25 +115,22 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	})
 	r.POST("/team-requests/:id", func(ctx *gin.Context) {
 		request_id := ctx.Param("id")
-		var days, requester_id, pto_type int
-		if err := pool.QueryRow(ctx, "SELECT days, user_id, pto_type_id FROM pto_requests WHERE id = $1", request_id).Scan(&days, &requester_id, &pto_type); err != nil {
-			fmt.Printf("Error request does not exist\nDatabase error: %v", err)
-			return
-		}
-		if _, err := pool.Exec(ctx, "UPDATE pto_balances SET balance = balance - $1 WHERE user_id = $2 AND pto_type_id = $3", days, requester_id, pto_type); err != nil {
-			fmt.Printf("Error cant update PTO balance\nDatabase error: %v", err)
-			return
-		}
-		_, err := pool.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", StatusApproved, request_id)
+		id, err := strconv.Atoi(request_id)
+
 		if err != nil {
-			fmt.Printf("Error approving request\nDatabase error: %v", err)
+			fmt.Printf("Not valid request ID", err)
+		}
+
+		err = service.ApproveRequest(ctx, id)
+		if err != nil {
+			// TODO: print errors
 			return
 		}
 		ctx.String(http.StatusOK, "approved")
 	})
 	r.GET("/team-requests", func(ctx *gin.Context) {
 		user_id, _ := ctx.Get("user_id")
-		requests, err := service.TeamRequests(ctx, user_id)
+		requests, err := service.GetTeamRequests(ctx, user_id)
 		if err != nil {
 			fmt.Printf("Error fetching team requests\n")
 			return
@@ -145,7 +142,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	r.GET("/my-requests", func(ctx *gin.Context) {
 
 		user_id, _ := ctx.Get("user_id")
-		requests, err := service.MyRequests(ctx, user_id)
+		requests, err := service.GetMyRequests(ctx, user_id)
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
@@ -157,7 +154,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 
 	r.POST("/my-requests", func(ctx *gin.Context) {
 		user_id, _ := ctx.Get("user_id")
-		requests, err := service.MyRequests(ctx, user_id)
+		requests, err := service.GetMyRequests(ctx, user_id)
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
