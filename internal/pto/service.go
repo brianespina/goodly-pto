@@ -15,7 +15,8 @@ func New(db *pgxpool.Pool) *PTOService {
 	return &PTOService{db: db}
 }
 
-func (s *PTOService) GetMyRequests(ctx *gin.Context, user_id any) ([]PTORequest, error) {
+func (s *PTOService) GetMyRequests(ctx *gin.Context) ([]PTORequest, error) {
+	user_id, _ := ctx.Get("user_id")
 	var requests []PTORequest
 	rows, err := s.db.Query(ctx, `
 			SELECT u.id, pt.title, u.name, pr.days, pr.status, pr.reason, pr.start_date, pr.end_date
@@ -43,7 +44,8 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, user_id any) ([]PTORequest,
 	return requests, nil
 }
 
-func (s *PTOService) GetTeamRequests(ctx *gin.Context, user_id any) ([]PTORequest, error) {
+func (s *PTOService) GetTeamRequests(ctx *gin.Context) ([]PTORequest, error) {
+	user_id, _ := ctx.Get("user_id")
 	var requests []PTORequest
 	rows, err := s.db.Query(ctx, `
 			SELECT DISTINCT 

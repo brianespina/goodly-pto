@@ -24,6 +24,7 @@ func RenderTemplateWithPermission(ctx *gin.Context, code int, template string, d
 }
 
 func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService) {
+
 	r.GET("/submit-pto", func(ctx *gin.Context) {
 		today := time.Now().Format("2006-01-02")
 		RenderTemplateWithPermission(ctx, http.StatusOK, "request-form.html", gin.H{
@@ -113,6 +114,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		}
 		ctx.Redirect(http.StatusSeeOther, "/submit-pto")
 	})
+
 	r.POST("/team-requests/:id", func(ctx *gin.Context) {
 		request_id := ctx.Param("id")
 		id, err := strconv.Atoi(request_id)
@@ -128,9 +130,9 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		}
 		ctx.String(http.StatusOK, "approved")
 	})
+
 	r.GET("/team-requests", func(ctx *gin.Context) {
-		user_id, _ := ctx.Get("user_id")
-		requests, err := service.GetTeamRequests(ctx, user_id)
+		requests, err := service.GetTeamRequests(ctx)
 		if err != nil {
 			fmt.Printf("Error fetching team requests\n")
 			return
@@ -139,10 +141,10 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			"requests": requests,
 		})
 	})
+
 	r.GET("/my-requests", func(ctx *gin.Context) {
 
-		user_id, _ := ctx.Get("user_id")
-		requests, err := service.GetMyRequests(ctx, user_id)
+		requests, err := service.GetMyRequests(ctx)
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
@@ -153,8 +155,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	})
 
 	r.POST("/my-requests", func(ctx *gin.Context) {
-		user_id, _ := ctx.Get("user_id")
-		requests, err := service.GetMyRequests(ctx, user_id)
+		requests, err := service.GetMyRequests(ctx)
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
