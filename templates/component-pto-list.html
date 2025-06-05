@@ -11,7 +11,7 @@
 		<div>Action</div>
 	</div>
 	<div class="request-list-body">
-		{{range .requests}}
+		{{range $request := .requests}}
 		<div class="request-list-item">
 			<div data-label="Type">{{.Type}}</div>
 			<div data-label="Name">{{.User}}</div>
@@ -20,12 +20,21 @@
 			<div data-label="Duration">{{.Days}}</div>
 			<div data-label="Status" id="status-{{.Id}}">{{.Status}}</div>
 			<div data-label="Action" class="action-cell">
-				<button class="button-circle-outline" hx-post="/team-requests/{{.Id}}"
-					hx-target="#status-{{.Id}}" hx-swap="innerHTML" hx-trigger="click"
-					title="Accept"><i class="fa-solid fa-check"></i></button>
-				<button class="button-circle-outline danger" hx-post="/team-requests/{{.Id}}"
-					hx-target="#status-{{.Id}}" hx-swap="innerHTML" hx-trigger="click"><i
-						class="fa-solid fa-xmark"></i></button>
+				{{if $.config}}
+				{{range $key, $val := $.config.Action}}
+					{{if eq $val "approve"}}
+						<button class="button-circle-outline" hx-post="/team-requests/{{$request.Id}}" hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click" title="Accept">
+							<i class="fa-solid fa-check"></i>
+						</button>
+					{{end}}
+					{{if eq $val "cancel"}}
+						<button class="button-circle-outline danger" hx-post="/team-requests/{{$request.Id}}" hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+					{{end}}
+				{{end}}
+					
+				{{end}}
 			</div>
 		</div>
 		{{end}}

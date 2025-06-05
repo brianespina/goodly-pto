@@ -15,6 +15,18 @@ const (
 	FieldEndDateRequired   string = "End date Required"
 )
 
+type PTOAction string
+
+const (
+	Approve PTOAction = "approve"
+	Cancel  PTOAction = "cancel"
+)
+
+type PTOListConfig struct {
+	Hide   string
+	Action []PTOAction
+}
+
 func RenderTemplateWithPermission(ctx *gin.Context, code int, template string, data gin.H) {
 	permission, ok := ctx.Get("permission")
 	if ok {
@@ -149,8 +161,15 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			fmt.Printf("Error fetching My requests\n")
 			return
 		}
+		config := PTOListConfig{
+			Action: []PTOAction{
+				Approve,
+				Cancel,
+			},
+		}
 		RenderTemplateWithPermission(ctx, http.StatusOK, "my-requests.html", gin.H{
 			"requests": requests,
+			"config":   config,
 		})
 	})
 
@@ -160,8 +179,15 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			fmt.Printf("Error fetching My requests\n")
 			return
 		}
+		config := PTOListConfig{
+			Action: []PTOAction{
+				Approve,
+				Cancel,
+			},
+		}
 		ctx.HTML(http.StatusOK, "component-pto-list", gin.H{
 			"requests": requests,
+			"config":   config,
 		})
 	})
 }

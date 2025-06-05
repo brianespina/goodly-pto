@@ -28,7 +28,6 @@ func main() {
 	r.SetTrustedProxies(nil)
 	r.LoadHTMLGlob("templates/*")
 
-
 	authGroup := r.Group("/")
 	authGroup.Use(auth.AuthRequired(pool))
 
