@@ -12,6 +12,19 @@ const (
 	StatusAll      PTOStatus = "all"
 )
 
+type PTOAction string
+
+const (
+	ActionApprove PTOAction = "approve"
+	ActionCancel  PTOAction = "cancel"
+	ActionDeny    PTOAction = "deny"
+)
+
+type PTOListConfig struct {
+	Hide   string
+	Action []PTOAction
+}
+
 type PTORequest struct {
 	Id          int
 	User        string

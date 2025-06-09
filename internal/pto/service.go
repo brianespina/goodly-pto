@@ -35,20 +35,22 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 		JOIN users u on u.id = pr.user_id
 		WHERE u.id = $1
 	`
+
 	args := []interface{}{user_id}
 
 	if filters.Status != StatusAll {
 		query += `AND pr.status = $2`
 		args = append(args, filters.Status)
 	}
-	rows, err := s.db.Query(ctx, query, args...)
 
+	rows, err := s.db.Query(ctx, query, args...)
 	if err != nil {
 		fmt.Printf("Error retrieving my requests\nDatabase error: %v", err)
 		return nil, err
 	}
 
 	defer rows.Close()
+
 	for rows.Next() {
 		var request PTORequest
 		err := rows.Scan(&request.Id, &request.Type, &request.User, &request.Days, &request.Status, &request.Reason, &request.StartDate, &request.EndDate)
@@ -107,15 +109,15 @@ type request struct {
 }
 
 func (s *PTOService) ApproveRequest(ctx *gin.Context, id int) error {
-	var request request
+	var days, user, pto_type int
 	// get reqeust
-	if err := s.db.QueryRow(ctx, "SELECT days, user_id, pto_type_id FROM pto_requests WHERE id = $1", id).Scan(&request.days, &request.user, &request.pto_type); err != nil {
+	if err := s.db.QueryRow(ctx, "SELECT days, user_id, pto_type_id FROM pto_requests WHERE id = $1", id).Scan(&days, &user, &pto_type); err != nil {
 		fmt.Printf("Error request does not exist\nDatabase error: %v", err)
 		return err
 	}
 
 	// reduce user balance
-	if _, err := s.db.Exec(ctx, "UPDATE pto_balances SET balance = balance - $1 WHERE user_id = $2 AND pto_type_id = $3", request.days, request.user, request.pto_type); err != nil {
+	if _, err := s.db.Exec(ctx, "UPDATE pto_balances SET balance = balance - $1 WHERE user_id = $2 AND pto_type_id = $3", days, user, pto_type); err != nil {
 		fmt.Printf("Error cant update PTO balance\nDatabase error: %v", err)
 		return err
 	}
