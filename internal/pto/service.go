@@ -112,3 +112,11 @@ func (s *PTOService) ApproveRequest(ctx *gin.Context, id int) error {
 
 	return nil
 }
+func (s *PTOService) CancelRequest(ctx *gin.Context, id int) error {
+	//update request status to canceled
+	if _, err := s.db.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", StatusCanceled, id); err != nil {
+		fmt.Printf("Error canceling request\nDatabase Error: %v", err)
+		return err
+	}
+	return nil
+}

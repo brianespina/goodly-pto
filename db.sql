@@ -43,6 +43,7 @@ CREATE TABLE pto_balances (
     CONSTRAINT positive_balance CHECK (balance >= 0)
 );
 
+
 -- PTO Requests Table
 CREATE TABLE pto_requests (
     id SERIAL PRIMARY KEY,
@@ -124,3 +125,4 @@ SELECT
                                           JOIN pto_types pt ON pr.pto_type_id = pt.id
                                           WHERE u_manager.id = 2
                                           ORDER BY pr.created_at DESC;
+

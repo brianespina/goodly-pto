@@ -179,6 +179,14 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			"config":   config,
 		})
 	})
+	r.DELETE("/my-requests/:id", func(ctx *gin.Context) {
+		id_raw := ctx.Param("id")
+		id, _ := strconv.Atoi(id_raw)
+		if err := service.CancelRequest(ctx, id); err != nil {
+			return
+		}
+		ctx.String(http.StatusOK, string(StatusCanceled))
+	})
 
 	r.POST("/my-requests", func(ctx *gin.Context) {
 		requests, err := service.GetMyRequests(ctx)

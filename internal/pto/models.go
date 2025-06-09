@@ -8,6 +8,7 @@ const (
 	StatusPending  PTOStatus = "pending"
 	StatusApproved PTOStatus = "approved"
 	StatusDenied   PTOStatus = "denied"
+	StatusCanceled PTOStatus = "canceled"
 )
 
 type PTORequest struct {

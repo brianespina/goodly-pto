@@ -1,5 +1,6 @@
 {{define "component-pto-list"}}
 {{if .requests}}
+
 <div class="requests-lits">
 	<div class="request-list-header">
 		<div>Type</div>
@@ -22,18 +23,21 @@
 			<div data-label="Action" class="action-cell">
 				{{if $.config}}
 				{{range $key, $val := $.config.Action}}
-					{{if eq $val "approve"}}
-						<button class="button-circle-outline" hx-post="/team-requests/{{$request.Id}}" hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click" title="Accept">
-							<i class="fa-solid fa-check"></i>
-						</button>
-					{{end}}
-					{{if eq $val "cancel"}}
-						<button class="button-circle-outline danger" hx-post="/team-requests/{{$request.Id}}" hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click">
-							<i class="fa-solid fa-xmark"></i>
-						</button>
-					{{end}}
+				{{if eq $val "approve"}}
+				<button class="button-circle-outline" hx-post="/team-requests/{{$request.Id}}"
+					hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click"
+					title="Accept">
+					<i class="fa-solid fa-check"></i>
+				</button>
 				{{end}}
-					
+				{{if eq $val "cancel"}}
+				<button class="button-circle-outline danger" hx-delete="/my-requests/{{$request.Id}}"
+					hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click">
+					<i class="fa-solid fa-xmark"></i>
+				</button>
+				{{end}}
+				{{end}}
+
 				{{end}}
 			</div>
 		</div>
