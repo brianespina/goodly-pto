@@ -20,6 +20,14 @@ const (
 	ActionDeny    PTOAction = "deny"
 )
 
+type PTOType string
+
+const (
+	TypeVacation PTOType = "vacation leave"
+	TypeSick     PTOType = "sick leave"
+	TypeAll      PTOType = "all"
+)
+
 type PTOListConfig struct {
 	Hide   string
 	Action []PTOAction

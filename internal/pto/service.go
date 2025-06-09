@@ -21,7 +21,8 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 	var requests []PTORequest
 
 	filters := PTOFilters{
-		Status: StatusPending,
+		Status: StatusAll,
+		Type:   TypeAll,
 	}
 
 	for _, opt := range opts {
@@ -37,10 +38,18 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 	`
 
 	args := []interface{}{user_id}
+	argsIdx := 2
 
 	if filters.Status != StatusAll {
-		query += `AND pr.status = $2`
+		query += fmt.Sprintf("AND pr.status = $%d", argsIdx)
 		args = append(args, filters.Status)
+		argsIdx++
+	}
+
+	if filters.Type != TypeAll {
+		query += fmt.Sprintf(" AND pt.title = $%d", argsIdx)
+		args = append(args, filters.Type)
+		argsIdx++
 	}
 
 	rows, err := s.db.Query(ctx, query, args...)
