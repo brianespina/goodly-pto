@@ -164,7 +164,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 
 	r.GET("/my-requests", func(ctx *gin.Context) {
 
-		requests, err := service.GetMyRequests(ctx)
+		requests, err := service.GetMyRequests(ctx, WithStatus(StatusAll))
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return

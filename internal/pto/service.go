@@ -15,16 +15,33 @@ func New(db *pgxpool.Pool) *PTOService {
 	return &PTOService{db: db}
 }
 
-func (s *PTOService) GetMyRequests(ctx *gin.Context) ([]PTORequest, error) {
+func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORequest, error) {
 	user_id, _ := ctx.Get("user_id")
+
 	var requests []PTORequest
-	rows, err := s.db.Query(ctx, `
-			SELECT pr.id, pt.title, u.name, pr.days, pr.status, pr.reason, pr.start_date, pr.end_date
-			FROM pto_requests as pr
-			JOIN pto_types pt on pt.id = pr.pto_type_id
-			JOIN users u on u.id = pr.user_id
-			WHERE u.id = $1
-		`, user_id)
+
+	filters := PTOFilters{
+		Status: StatusPending,
+	}
+
+	for _, opt := range opts {
+		opt(&filters)
+	}
+
+	query := `
+		SELECT pr.id, pt.title, u.name, pr.days, pr.status, pr.reason, pr.start_date, pr.end_date
+		FROM pto_requests as pr
+		JOIN pto_types pt on pt.id = pr.pto_type_id
+		JOIN users u on u.id = pr.user_id
+		WHERE u.id = $1
+	`
+	args := []interface{}{user_id}
+
+	if filters.Status != StatusAll {
+		query += `AND pr.status = $2`
+		args = append(args, filters.Status)
+	}
+	rows, err := s.db.Query(ctx, query, args...)
 
 	if err != nil {
 		fmt.Printf("Error retrieving my requests\nDatabase error: %v", err)
