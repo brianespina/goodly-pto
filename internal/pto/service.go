@@ -19,7 +19,7 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context) ([]PTORequest, error) {
 	user_id, _ := ctx.Get("user_id")
 	var requests []PTORequest
 	rows, err := s.db.Query(ctx, `
-			SELECT u.id, pt.title, u.name, pr.days, pr.status, pr.reason, pr.start_date, pr.end_date
+			SELECT pr.id, pt.title, u.name, pr.days, pr.status, pr.reason, pr.start_date, pr.end_date
 			FROM pto_requests as pr
 			JOIN pto_types pt on pt.id = pr.pto_type_id
 			JOIN users u on u.id = pr.user_id
@@ -112,6 +112,7 @@ func (s *PTOService) ApproveRequest(ctx *gin.Context, id int) error {
 
 	return nil
 }
+
 func (s *PTOService) CancelRequest(ctx *gin.Context, id int) error {
 	//update request status to canceled
 	if _, err := s.db.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", StatusCanceled, id); err != nil {
