@@ -64,7 +64,6 @@ func (s *PTOService) GetTeamRequests(ctx *gin.Context) ([]PTORequest, error) {
 			JOIN role_management rm on users.role_id = rm.managed_role_id
 			JOIN users mu on rm.manager_role_id = mu.role_id
 			WHERE mu.id = $1
-			AND pr.status = 'pending'
 			ORDER BY pr.created_at DESC
 		`, user_id)
 	if err != nil {

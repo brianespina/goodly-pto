@@ -149,8 +149,16 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			fmt.Printf("Error fetching team requests\n")
 			return
 		}
+		config := PTOListConfig{
+			Action: []PTOAction{
+				Cancel,
+				Approve,
+			},
+		}
+
 		RenderTemplateWithPermission(ctx, http.StatusOK, "team-requests.html", gin.H{
 			"requests": requests,
+			"config":   config,
 		})
 	})
 
@@ -163,7 +171,6 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		}
 		config := PTOListConfig{
 			Action: []PTOAction{
-				Approve,
 				Cancel,
 			},
 		}
@@ -181,7 +188,6 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		}
 		config := PTOListConfig{
 			Action: []PTOAction{
-				Approve,
 				Cancel,
 			},
 		}
