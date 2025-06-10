@@ -177,11 +177,17 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	})
 
 	r.POST("/my-requests", func(ctx *gin.Context) {
-		status := ctx.PostForm("f_status")
+		status := PTOStatus(ctx.PostForm("f_status"))
+		f_type := PTOType(ctx.PostForm("f_type"))
+
 		if status == "" {
-			status = string(StatusPending)
+			status = StatusPending
 		}
-		requests, err := service.GetMyRequests(ctx, WithStatus(PTOStatus(status)))
+		if f_type == "" {
+			f_type = TypeAll
+		}
+
+		requests, err := service.GetMyRequests(ctx, WithStatus(status), WithType(f_type))
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return

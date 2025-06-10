@@ -1,0 +1,20 @@
+{{define "component-pto-list-filters"}}
+<form hx-post="/my-requests" hx-trigger="change" hx-target=".requests-lits" hx-swap="outerHTML" style="display: flex;">
+	<fieldset>
+		<select name="f_status">
+			<option value="pending" selected>Pending</option>
+			<option value="approved">Approved</option>
+			<option value="denied">Denied</option>
+			<option value="canceled">Canceled</option>
+			<option value="all">All</option>
+		</select>
+	</fieldset>
+	<fieldset>
+		<select name="f_type">
+			<option value="vacation leave">Vacation Leave</option>
+			<option value="sick leave">Sick Leave</option>
+			<option value="all" selected>All</option>
+		</select>
+	</fieldset>
+</form>
+{{end}}
