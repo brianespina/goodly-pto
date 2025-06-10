@@ -3,6 +3,16 @@
 <div class="container">
 	<h1>My Requests</h1>
 
+	<form hx-post="/my-requests" hx-trigger="change" hx-target=".requests-lits" hx-swap="outerHTML">
+		<fieldset>
+			<select name="f_status">
+				<option value="pending" selected>Pending</option>
+				<option value="approved">Approved</option>
+				<option value="denied">Denied</option>
+				<option value="all">All</option>
+			</select>
+		</fieldset>
+	</form>
 	<div class="card">
 		{{template "component-pto-list" .}}
 	</div>

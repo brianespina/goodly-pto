@@ -21,7 +21,7 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 	var requests []PTORequest
 
 	filters := PTOFilters{
-		Status: StatusAll,
+		Status: StatusPending,
 		Type:   TypeAll,
 	}
 

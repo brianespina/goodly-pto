@@ -152,7 +152,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 
 	r.GET("/my-requests", func(ctx *gin.Context) {
 
-		requests, err := service.GetMyRequests(ctx, WithStatus(StatusAll), WithType(TypeAll))
+		requests, err := service.GetMyRequests(ctx)
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
@@ -177,7 +177,11 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	})
 
 	r.POST("/my-requests", func(ctx *gin.Context) {
-		requests, err := service.GetMyRequests(ctx)
+		status := ctx.PostForm("f_status")
+		if status == "" {
+			status = string(StatusPending)
+		}
+		requests, err := service.GetMyRequests(ctx, WithStatus(PTOStatus(status)))
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
