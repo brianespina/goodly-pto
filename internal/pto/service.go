@@ -19,24 +19,37 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 	user_id, _ := ctx.Get("user_id")
 
 	var requests []PTORequest
+	var query string
+	filters := ApplyFilters(opts)
 
-	filters := PTOFilters{
-		Status: StatusPending,
-		Type:   TypeAll,
-		Date:   DateUpcomming,
-	}
-
-	for _, opt := range opts {
-		opt(&filters)
-	}
-
-	query := `
+	if filters.View == ListTeamView {
+		query = `
+			SELECT DISTINCT 
+			pr.id,
+			pt.title,
+			pr.start_date,
+			pr.end_date,
+			users.name as requester,
+			pr.days,
+			pr.status,
+			pr.reason,
+			pr.created_at
+			FROM users 
+			JOIN pto_requests pr on pr.user_id = users.id
+			JOIN pto_types pt on pr.pto_type_id = pt.id
+			JOIN role_management rm on users.role_id = rm.managed_role_id
+			JOIN users mu on rm.manager_role_id = mu.role_id
+			WHERE mu.id = $1
+		`
+	} else {
+		query = `
 		SELECT pr.id, pt.title, u.name, pr.days, pr.status, pr.reason, pr.start_date, pr.end_date
 		FROM pto_requests as pr
 		JOIN pto_types pt on pt.id = pr.pto_type_id
 		JOIN users u on u.id = pr.user_id
 		WHERE u.id = $1
-	`
+		`
+	}
 
 	args := []interface{}{user_id}
 	argsIdx := 2
@@ -69,52 +82,18 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 
 	for rows.Next() {
 		var request PTORequest
-		err := rows.Scan(&request.Id, &request.Type, &request.User, &request.Days, &request.Status, &request.Reason, &request.StartDate, &request.EndDate)
+		var err error
+		if filters.View == ListTeamView {
+			err = rows.Scan(&request.Id, &request.Type, &request.StartDate, &request.EndDate, &request.User, &request.Days, &request.Status, &request.Reason, &request.CreatedDate)
+		} else {
+			err = rows.Scan(&request.Id, &request.Type, &request.User, &request.Days, &request.Status, &request.Reason, &request.StartDate, &request.EndDate)
+		}
 		requests = append(requests, request)
 		if err != nil {
 			fmt.Printf("Error scanning my requests\nDatabase error: %v", err)
 			return nil, err
 		}
 	}
-	return requests, nil
-}
-
-func (s *PTOService) GetTeamRequests(ctx *gin.Context) ([]PTORequest, error) {
-	user_id, _ := ctx.Get("user_id")
-	var requests []PTORequest
-	rows, err := s.db.Query(ctx, `
-			SELECT DISTINCT 
-			pr.id,
-			pt.title,
-			pr.start_date,
-			pr.end_date,
-			users.name as requester,
-			pr.days,
-			pr.status,
-			pr.reason,
-			pr.created_at
-			FROM users 
-			JOIN pto_requests pr on pr.user_id = users.id
-			JOIN pto_types pt on pr.pto_type_id = pt.id
-			JOIN role_management rm on users.role_id = rm.managed_role_id
-			JOIN users mu on rm.manager_role_id = mu.role_id
-			WHERE mu.id = $1
-			ORDER BY pr.created_at DESC
-		`, user_id)
-	if err != nil {
-		fmt.Printf("Error retrieving team requests\nDatabase error: %v", err)
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var request PTORequest
-		err := rows.Scan(&request.Id, &request.Type, &request.StartDate, &request.EndDate, &request.User, &request.Days, &request.Status, &request.Reason, &request.CreatedDate)
-		requests = append(requests, request)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return requests, nil
 }
 

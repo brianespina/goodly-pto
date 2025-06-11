@@ -132,7 +132,8 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	})
 
 	r.GET("/team-requests", func(ctx *gin.Context) {
-		requests, err := service.GetTeamRequests(ctx)
+
+		requests, err := service.GetMyRequests(ctx, WithView(ListTeamView), WithDate(DateAll))
 		if err != nil {
 			fmt.Printf("Error fetching team requests\n")
 			return
@@ -167,6 +168,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			"config":   config,
 		})
 	})
+
 	r.DELETE("/my-requests/:id", func(ctx *gin.Context) {
 		id_raw := ctx.Param("id")
 		id, _ := strconv.Atoi(id_raw)
@@ -177,20 +179,22 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 	})
 
 	r.POST("/my-requests", func(ctx *gin.Context) {
-		status := PTOStatus(ctx.PostForm("f_status"))
+		f_status := PTOStatus(ctx.PostForm("f_status"))
 		f_type := PTOType(ctx.PostForm("f_type"))
 		f_date := PTODate(ctx.PostForm("f_date"))
 
-		requests, err := service.GetMyRequests(ctx, WithStatus(status), WithType(f_type), WithDate(f_date))
+		requests, err := service.GetMyRequests(ctx, WithStatus(f_status), WithType(f_type), WithDate(f_date))
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
 		}
+
 		config := PTOListConfig{
 			Action: []PTOAction{
 				ActionCancel,
 			},
 		}
+
 		ctx.HTML(http.StatusOK, "component-pto-list", gin.H{
 			"requests": requests,
 			"config":   config,

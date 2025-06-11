@@ -4,6 +4,7 @@ type PTOFilters struct {
 	Status PTOStatus
 	Type   PTOType
 	Date   PTODate
+	View   PTOListView
 }
 
 type PTOOption func(*PTOFilters)
@@ -33,4 +34,24 @@ func WithDate(date PTODate) PTOOption {
 	return func(f *PTOFilters) {
 		f.Date = date
 	}
+}
+
+func WithView(view PTOListView) PTOOption {
+	return func(f *PTOFilters) {
+		f.View = view
+	}
+}
+
+func ApplyFilters(opts []PTOOption) PTOFilters {
+	filters := PTOFilters{
+		Status: StatusPending,
+		Type:   TypeAll,
+		Date:   DateUpcomming,
+		View:   ListMyView,
+	}
+
+	for _, opt := range opts {
+		opt(&filters)
+	}
+	return filters
 }

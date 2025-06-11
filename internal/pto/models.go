@@ -36,6 +36,13 @@ const (
 	DatePast      PTODate = "past"
 )
 
+type PTOListView int
+
+const (
+	ListTeamView PTOListView = iota
+	ListMyView
+)
+
 type PTOListConfig struct {
 	Hide   string
 	Action []PTOAction
