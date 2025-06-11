@@ -181,18 +181,6 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		f_type := PTOType(ctx.PostForm("f_type"))
 		f_date := PTODate(ctx.PostForm("f_date"))
 
-		if status == "" {
-			status = StatusPending
-		}
-
-		if f_type == "" {
-			f_type = TypeAll
-		}
-
-		if f_date == "" {
-			f_date = DateAll
-		}
-
 		requests, err := service.GetMyRequests(ctx, WithStatus(status), WithType(f_type), WithDate(f_date))
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
