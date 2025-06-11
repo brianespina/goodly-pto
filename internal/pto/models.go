@@ -28,6 +28,14 @@ const (
 	TypeAll      PTOType = "all"
 )
 
+type PTODate string
+
+const (
+	DateAll       PTODate = "all"
+	DateUpcomming PTODate = "upcomming"
+	DatePast      PTODate = "past"
+)
+
 type PTOListConfig struct {
 	Hide   string
 	Action []PTOAction

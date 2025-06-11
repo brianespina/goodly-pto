@@ -1,7 +1,9 @@
 {{define "component-pto-list-filters"}}
-<form hx-post="/my-requests" hx-trigger="change" hx-target=".requests-lits" hx-swap="outerHTML" style="display: flex;">
+<form hx-post="/my-requests" hx-trigger="change" hx-target=".requests-lits" hx-swap="outerHTML"
+	style="display: flex; align-items: flex-end;">
 	<fieldset>
-		<select name="f_status">
+		<label for="status">Status</label>
+		<select name="f_status" id="status">
 			<option value="pending" selected>Pending</option>
 			<option value="approved">Approved</option>
 			<option value="denied">Denied</option>
@@ -10,10 +12,19 @@
 		</select>
 	</fieldset>
 	<fieldset>
-		<select name="f_type">
+		<label for="type">Type</label>
+		<select name="f_type" id="type">
 			<option value="vacation leave">Vacation Leave</option>
 			<option value="sick leave">Sick Leave</option>
 			<option value="all" selected>All</option>
+		</select>
+	</fieldset>
+	<fieldset>
+		<label for="date">Date</label>
+		<select name="f_date" id="date">
+			<option value="upcomming" selected>Upcomming</option>
+			<option value="past">Past</option>
+			<option value="all">All</option>
 		</select>
 	</fieldset>
 </form>

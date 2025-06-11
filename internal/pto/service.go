@@ -23,6 +23,7 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 	filters := PTOFilters{
 		Status: StatusPending,
 		Type:   TypeAll,
+		Date:   DateUpcomming,
 	}
 
 	for _, opt := range opts {
@@ -50,6 +51,12 @@ func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORe
 		query += fmt.Sprintf(" AND pt.title = $%d", argsIdx)
 		args = append(args, filters.Type)
 		argsIdx++
+	}
+
+	if filters.Date == DateUpcomming {
+		query += ` AND pr.start_date > NOW()`
+	} else if filters.Date == DatePast {
+		query += ` AND pr.start_date < NOW()`
 	}
 
 	rows, err := s.db.Query(ctx, query, args...)
