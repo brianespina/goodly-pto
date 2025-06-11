@@ -40,7 +40,7 @@ textarea:focus {
 	box-shadow: 0 0 0 1px var(--primary-color);
 }
 
-fieldset{
+fieldset {
 	border: none;
 	padding: 0;
 }
@@ -299,6 +299,12 @@ header nav a.active {
 .image {
 	display: block;
 	object-fit: contain;
+}
+
+.request-list-item.canceled {
+	color: #c66;
+	opacity: 0.4;
+	pointer-events: none;
 }
 
 /* Responsive design for mobile (less than 768px) */

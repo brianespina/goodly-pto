@@ -12,7 +12,7 @@
 	</div>
 	<div class="request-list-body">
 		{{range $request := .requests}}
-		<div class="request-list-item">
+		<div class="request-list-item {{.Status}}">
 			<div data-label="Type">{{.Type}}</div>
 			<div data-label="Name">{{.User}}</div>
 			<div data-label="Date From">{{.StartDate.Format "January 2, 2006"}}</div>
