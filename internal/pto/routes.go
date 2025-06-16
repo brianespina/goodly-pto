@@ -128,7 +128,8 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			// TODO: print errors
 			return
 		}
-		ctx.String(http.StatusOK, "approved")
+		ctx.String(http.StatusOK, string(StatusApproved))
+	})
 	r.DELETE("/team-requests/:id", func(ctx *gin.Context) {
 		request_id := ctx.Param("id")
 		id, err := strconv.Atoi(request_id)
