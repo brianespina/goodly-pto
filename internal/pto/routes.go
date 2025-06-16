@@ -133,7 +133,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 
 	r.GET("/team-requests", func(ctx *gin.Context) {
 
-		requests, err := service.GetMyRequests(ctx, WithView(ListTeamView), WithDate(DateAll))
+		requests, err := service.GetRequests(ctx, WithView(ListTeamView), WithDate(DateAll))
 		if err != nil {
 			fmt.Printf("Error fetching team requests\n")
 			return
@@ -153,7 +153,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 
 	r.GET("/my-requests", func(ctx *gin.Context) {
 
-		requests, err := service.GetMyRequests(ctx)
+		requests, err := service.GetRequests(ctx)
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
@@ -185,7 +185,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		f_date := PTODate(ctx.PostForm("f_date"))
 		f_view := PTOListView(ctx.PostForm("f_view"))
 
-		requests, err := service.GetMyRequests(ctx, WithStatus(f_status), WithType(f_type), WithDate(f_date), WithView(f_view))
+		requests, err := service.GetRequests(ctx, WithStatus(f_status), WithType(f_type), WithDate(f_date), WithView(f_view))
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return

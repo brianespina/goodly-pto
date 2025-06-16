@@ -15,7 +15,7 @@ func New(db *pgxpool.Pool) *PTOService {
 	return &PTOService{db: db}
 }
 
-func (s *PTOService) GetMyRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORequest, error) {
+func (s *PTOService) GetRequests(ctx *gin.Context, opts ...PTOOption) ([]PTORequest, error) {
 	user_id, _ := ctx.Get("user_id")
 
 	var requests []PTORequest
