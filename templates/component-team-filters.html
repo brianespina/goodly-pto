@@ -1,6 +1,7 @@
-{{define "component-pto-list-filters"}}
+{{define "component-pto-list-team-filters"}}
 <form hx-post="/requests" hx-trigger="change" hx-target=".requests-lits" hx-swap="outerHTML"
 	style="display: flex; align-items: flex-end;">
+	<input type="hidden" value="team" name="f_view">
 	<fieldset>
 		<label for="status">Status</label>
 		<select name="f_status" id="status">

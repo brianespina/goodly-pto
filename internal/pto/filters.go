@@ -37,6 +37,9 @@ func WithDate(date PTODate) PTOOption {
 }
 
 func WithView(view PTOListView) PTOOption {
+	if view == "" {
+		view = ListMyView
+	}
 	return func(f *PTOFilters) {
 		f.View = view
 	}

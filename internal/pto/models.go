@@ -36,11 +36,11 @@ const (
 	DatePast      PTODate = "past"
 )
 
-type PTOListView int
+type PTOListView string
 
 const (
-	ListTeamView PTOListView = iota
-	ListMyView
+	ListTeamView PTOListView = "team"
+	ListMyView   PTOListView = "my"
 )
 
 type PTOListConfig struct {

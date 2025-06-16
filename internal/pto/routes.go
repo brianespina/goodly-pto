@@ -163,6 +163,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 				ActionCancel,
 			},
 		}
+
 		RenderTemplateWithPermission(ctx, http.StatusOK, "my-requests.html", gin.H{
 			"requests": requests,
 			"config":   config,
@@ -178,12 +179,13 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		ctx.String(http.StatusOK, string(StatusCanceled))
 	})
 
-	r.POST("/my-requests", func(ctx *gin.Context) {
+	r.POST("/requests", func(ctx *gin.Context) {
 		f_status := PTOStatus(ctx.PostForm("f_status"))
 		f_type := PTOType(ctx.PostForm("f_type"))
 		f_date := PTODate(ctx.PostForm("f_date"))
+		f_view := PTOListView(ctx.PostForm("f_view"))
 
-		requests, err := service.GetMyRequests(ctx, WithStatus(f_status), WithType(f_type), WithDate(f_date))
+		requests, err := service.GetMyRequests(ctx, WithStatus(f_status), WithType(f_type), WithDate(f_date), WithView(f_view))
 		if err != nil {
 			fmt.Printf("Error fetching My requests\n")
 			return
