@@ -2,6 +2,7 @@
 <form hx-post="/requests" hx-trigger="change" hx-target=".requests-lits" hx-swap="outerHTML"
 	style="display: flex; align-items: flex-end;">
 	<input type="hidden" value="team" name="f_view">
+	<input type="hidden" value="1" name="is_team">
 	<fieldset>
 		<label for="status">Status</label>
 		<select name="f_status" id="status">

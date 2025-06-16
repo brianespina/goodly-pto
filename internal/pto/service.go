@@ -103,6 +103,24 @@ type request struct {
 	pto_type int
 }
 
+func (s *PTOService) DenyRequest(ctx *gin.Context, id int) error {
+	var days, user, pto_type int
+	// get reqeust
+	if err := s.db.QueryRow(ctx, "SELECT days, user_id, pto_type_id FROM pto_requests WHERE id = $1", id).Scan(&days, &user, &pto_type); err != nil {
+		fmt.Printf("Error request does not exist\nDatabase error: %v", err)
+		return err
+	}
+
+	// set status to denied
+	_, err := s.db.Exec(ctx, "UPDATE pto_requests SET status = $1 WHERE id = $2", StatusDenied, id)
+	if err != nil {
+		fmt.Printf("Error denying request\nDatabase error: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 func (s *PTOService) ApproveRequest(ctx *gin.Context, id int) error {
 	var days, user, pto_type int
 	// get reqeust

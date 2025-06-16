@@ -129,6 +129,18 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			return
 		}
 		ctx.String(http.StatusOK, "approved")
+	r.DELETE("/team-requests/:id", func(ctx *gin.Context) {
+		request_id := ctx.Param("id")
+		id, err := strconv.Atoi(request_id)
+		if err != nil {
+			fmt.Printf("Not valid request ID", err)
+		}
+		err = service.DenyRequest(ctx, id)
+		if err != nil {
+			// TODO: print errors
+			return
+		}
+		ctx.String(http.StatusOK, string(StatusDenied))
 	})
 
 	r.GET("/team-requests", func(ctx *gin.Context) {
@@ -140,7 +152,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		}
 		config := PTOListConfig{
 			Action: []PTOAction{
-				ActionCancel,
+				ActionDeny,
 				ActionApprove,
 			},
 		}
@@ -184,6 +196,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		f_type := PTOType(ctx.PostForm("f_type"))
 		f_date := PTODate(ctx.PostForm("f_date"))
 		f_view := PTOListView(ctx.PostForm("f_view"))
+		is_team := ctx.PostForm("is_team")
 
 		requests, err := service.GetRequests(ctx, WithStatus(f_status), WithType(f_type), WithDate(f_date), WithView(f_view))
 		if err != nil {
@@ -191,12 +204,17 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 			return
 		}
 
-		config := PTOListConfig{
-			Action: []PTOAction{
-				ActionCancel,
-			},
+		actions := []PTOAction{
+			ActionCancel,
+		}
+		if is_team == "1" {
+			actions = []PTOAction{
+				ActionApprove,
+				ActionDeny,
+			}
 		}
 
+		config := PTOListConfig{Action: actions}
 		ctx.HTML(http.StatusOK, "component-pto-list", gin.H{
 			"requests": requests,
 			"config":   config,

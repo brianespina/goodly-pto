@@ -29,6 +29,13 @@
 					<i class="fa-solid fa-check"></i>
 				</button>
 				{{end}}
+				{{if eq $val "deny"}}
+				<button class="button-circle-outline danger" hx-delete="/team-requests/{{$request.Id}}"
+					hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click"
+					title="Deny">
+					<i class="fa-solid fa-xmark"></i>
+				</button>
+				{{end}}
 				{{if eq $val "cancel"}}
 				<button class="button-circle-outline danger" hx-delete="/my-requests/{{$request.Id}}"
 					hx-target="#status-{{$request.Id}}" hx-swap="innerHTML" hx-trigger="click">
