@@ -130,23 +130,27 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		}
 		ctx.String(http.StatusOK, string(StatusApproved))
 	})
+
 	r.DELETE("/team-requests/:id", func(ctx *gin.Context) {
 		request_id := ctx.Param("id")
 		id, err := strconv.Atoi(request_id)
+
 		if err != nil {
 			fmt.Printf("Not valid request ID", err)
 		}
+
 		err = service.DenyRequest(ctx, id)
 		if err != nil {
 			// TODO: print errors
 			return
 		}
+
 		ctx.String(http.StatusOK, string(StatusDenied))
 	})
 
 	r.GET("/team-requests", func(ctx *gin.Context) {
 
-		requests, err := service.GetRequests(ctx, WithView(ListTeamView), WithDate(DateAll))
+		requests, err := service.GetRequests(ctx, WithView(ListTeamView))
 		if err != nil {
 			fmt.Printf("Error fetching team requests\n")
 			return
@@ -216,6 +220,7 @@ func RegisterRoutes(r *gin.RouterGroup, pool *pgxpool.Pool, service *PTOService)
 		}
 
 		config := PTOListConfig{Action: actions}
+
 		ctx.HTML(http.StatusOK, "component-pto-list", gin.H{
 			"requests": requests,
 			"config":   config,
